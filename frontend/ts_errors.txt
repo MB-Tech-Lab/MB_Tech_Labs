@@ -1,0 +1,16 @@
+src/components/Navbar.tsx(5,22): error TS2307: Cannot find module '@/types' or its corresponding type declarations.
+src/components/Sidebar.tsx(5,22): error TS2307: Cannot find module '@/types' or its corresponding type declarations.
+src/components/TaskCard.tsx(2,22): error TS2307: Cannot find module '@/types' or its corresponding type declarations.
+src/components/TaskCard.tsx(44,7): error TS2322: Type '{ children: Element[]; hoverable: true; onClick: (() => void) | undefined; className: string; }' is not assignable to type 'IntrinsicAttributes & CardProps'.
+  Property 'onClick' does not exist on type 'IntrinsicAttributes & CardProps'.
+src/components/TaskCard.tsx(54,72): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ high: string; medium: string; low: string; }'.
+src/components/TaskCard.tsx(61,74): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ pending: string; in_progress: string; submitted: string; approved: string; completed: string; rejected: string; }'.
+src/components/TaskCard.tsx(62,14): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ pending: string; in_progress: string; submitted: string; approved: string; completed: string; rejected: string; }'.
+src/hooks/useAuth.ts(17,29): error TS2339: Property 'user' does not exist on type '{ id: string; name: any; email: string | undefined; role: any; }'.
+src/hooks/useAuth.ts(17,49): error TS2339: Property 'token' does not exist on type '{ id: string; name: any; email: string | undefined; role: any; }'.
+src/hooks/useAuth.ts(30,54): error TS2339: Property 'user' does not exist on type '{ id: string; name: any; email: string | undefined; role: any; }'.
+src/services/auth.ts(1,28): error TS2307: Cannot find module '@/types' or its corresponding type declarations.
+src/services/mockData.ts(1,10): error TS2300: Duplicate identifier 'User'.
+src/services/mockData.ts(1,37): error TS2300: Duplicate identifier 'User'.
+src/services/mockData.ts(1,61): error TS2307: Cannot find module '@/types' or its corresponding type declarations.
+src/services/mockData.ts(249,42): error TS7006: Parameter 'm' implicitly has an 'any' type.
