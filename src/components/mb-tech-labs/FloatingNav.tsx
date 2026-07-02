@@ -110,7 +110,7 @@ export function FloatingNav() {
               </span>
             </div>
             <a
-              href="#contact"
+              href="/start-project"
               className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-cyan text-ink font-medium text-[13px] px-4 py-2.5 hover:bg-cyan-soft transition-all duration-300 hover:shadow-[0_8px_30px_-6px_rgba(37,214,255,0.6)]"
             >
               Start Your Project
@@ -175,7 +175,7 @@ export function FloatingNav() {
                   </span>
                 </div>
                 <a
-                  href="#contact"
+                  href="/start-project"
                   onClick={() => setOpen(false)}
                   className="inline-flex items-center gap-1.5 rounded-xl bg-cyan text-ink font-medium text-[13px] px-4 py-2.5"
                 >

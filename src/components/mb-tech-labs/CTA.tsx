@@ -52,7 +52,7 @@ export function CTA() {
 
               <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <a
-                  href="#contact"
+                  href="/start-project"
                   className="group inline-flex items-center gap-2 rounded-xl bg-cyan text-ink font-semibold text-[14.5px] px-6 py-3.5 hover:bg-cyan-soft transition-all duration-300 hover:shadow-[0_12px_40px_-8px_rgba(37,214,255,0.65)]"
                 >
                   <Calendar className="h-4 w-4" />
@@ -60,7 +60,7 @@ export function CTA() {
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </a>
                 <a
-                  href="#contact"
+                  href="/start-project"
                   className="group inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.03] backdrop-blur-md text-white font-medium text-[14.5px] px-6 py-3.5 hover:bg-white/[0.07] hover:border-white/25 transition-all duration-300"
                 >
                   <Mail className="h-4 w-4 text-cyan" />

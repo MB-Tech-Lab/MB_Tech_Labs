@@ -1,0 +1,298 @@
+/**
+ * Restaurant Template
+ * -------------------
+ * For restaurants, cafes, QSR chains, and cloud kitchens.
+ * Focus: orders, POS, menu, delivery, reservations, loyalty.
+ */
+import type { SrgTemplate } from "../types";
+
+export const restaurantTemplate: SrgTemplate = {
+  id: "restaurant",
+  name: "Restaurant / F&B",
+  tagline: "POS, online ordering, delivery & loyalty",
+  description:
+    "For restaurants, cafes, QSR chains, cloud kitchens, and F&B brands managing orders, menus, and customer experience.",
+  icon: "UtensilsCrossed",
+  accent: "from-cyan/20 to-cyan/5",
+  suggestedGoals: [
+    "Launch online ordering with 30% margin uplift",
+    "Reduce order-to-table time by 40%",
+    "Build customer loyalty program",
+    "Enable multi-location centralized menu management",
+  ],
+  sections: [
+    {
+      id: "restaurant-profile",
+      title: "Restaurant Profile",
+      questions: [
+        {
+          id: "concept_type",
+          type: "select",
+          label: "Restaurant concept",
+          required: true,
+          options: [
+            { label: "Fine Dining", value: "fine_dining" },
+            { label: "Casual Dining", value: "casual" },
+            { label: "QSR (Quick Service)", value: "qsr" },
+            { label: "Cafe / Coffee Shop", value: "cafe" },
+            { label: "Bar / Pub", value: "bar" },
+            { label: "Cloud Kitchen", value: "cloud" },
+            { label: "Bakery / Dessert", value: "bakery" },
+            { label: "Food Truck", value: "truck" },
+          ],
+        },
+        {
+          id: "outlet_count",
+          type: "number",
+          label: "Number of outlets",
+          required: true,
+          min: 1,
+          max: 1000,
+        },
+        {
+          id: "cuisine_types",
+          type: "multiselect",
+          label: "Cuisine types served",
+          options: [
+            { label: "North Indian", value: "north_indian" },
+            { label: "South Indian", value: "south_indian" },
+            { label: "Chinese / Pan-Asian", value: "asian" },
+            { label: "Continental", value: "continental" },
+            { label: "Italian", value: "italian" },
+            { label: "Mughlai", value: "mughlai" },
+            { label: "Continental", value: "continental" },
+            { label: "Mexican", value: "mexican" },
+            { label: "Vegan / Plant-based", value: "vegan" },
+            { label: "Desserts", value: "desserts" },
+          ],
+        },
+        {
+          id: "avg_daily_orders",
+          type: "number",
+          label: "Average daily orders (all outlets)",
+          required: true,
+          min: 1,
+          max: 100000,
+        },
+        {
+          id: "service_modes",
+          type: "multiselect",
+          label: "Service modes offered",
+          required: true,
+          options: [
+            { label: "Dine-in", value: "dinein" },
+            { label: "Takeaway", value: "takeaway" },
+            { label: "Self-delivery", value: "self_delivery" },
+            { label: "Aggregator (Zomato/Swiggy)", value: "aggregator" },
+            { label: "Catering", value: "catering" },
+            { label: "Reservation only", value: "reservation" },
+          ],
+        },
+      ],
+    },
+    {
+      id: "restaurant-modules",
+      title: "Required Modules",
+      questions: [
+        {
+          id: "modules_needed",
+          type: "multiselect",
+          label: "Which modules do you need?",
+          required: true,
+          options: [
+            { label: "POS (Point of Sale)", value: "pos" },
+            { label: "Menu Management", value: "menu" },
+            { label: "Online Ordering Website", value: "ordering_web" },
+            { label: "Customer Mobile App", value: "mobile_app" },
+            { label: "Table Reservations", value: "reservations" },
+            { label: "Kitchen Display System (KDS)", value: "kds" },
+            { label: "Inventory & Recipes", value: "inventory" },
+            { label: "Loyalty / Rewards", value: "loyalty" },
+            { label: "CRM (Customer profiles)", value: "crm" },
+            { label: "Delivery Management", value: "delivery" },
+            { label: "Reporting & Analytics", value: "analytics" },
+            { label: "Staff Scheduling", value: "scheduling" },
+          ],
+        },
+        {
+          id: "pos_detail",
+          type: "select",
+          label: "POS hardware preference",
+          showIf: [{ questionId: "modules_needed", op: "contains", value: "pos" }],
+          options: [
+            { label: "Android tablets", value: "android" },
+            { label: "Windows POS terminals", value: "windows" },
+            { label: "iPad-based", value: "ipad" },
+            { label: "Mobile-only (phone as POS)", value: "mobile" },
+            { label: "Undecided", value: "undecided" },
+          ],
+        },
+        {
+          id: "kitchen_printing",
+          type: "boolean",
+          label: "Do you need kitchen order ticket (KOT) printing?",
+          showIf: [{ questionId: "modules_needed", op: "contains", value: "pos" }],
+        },
+        {
+          id: "loyalty_detail",
+          type: "multiselect",
+          label: "Loyalty program type",
+          showIf: [{ questionId: "modules_needed", op: "contains", value: "loyalty" }],
+          options: [
+            { label: "Points-based", value: "points" },
+            { label: "Tiered membership", value: "tiered" },
+            { label: "Cashback wallet", value: "cashback" },
+            { label: "Stamp card (buy X get 1 free)", value: "stamp" },
+            { label: "Referral rewards", value: "referral" },
+          ],
+        },
+      ],
+    },
+    {
+      id: "restaurant-payments",
+      title: "Payments & Aggregators",
+      questions: [
+        {
+          id: "payment_methods",
+          type: "multiselect",
+          label: "Accepted payment methods",
+          required: true,
+          options: [
+            { label: "Cash", value: "cash" },
+            { label: "UPI", value: "upi" },
+            { label: "Cards (Credit/Debit)", value: "cards" },
+            { label: "Wallets (Paytm/PhonePe)", value: "wallets" },
+            { label: "QR Code (BharatQR)", value: "qr" },
+            { label: "Credit (for regulars)", value: "credit" },
+          ],
+        },
+        {
+          id: "aggregator_integrations",
+          type: "multiselect",
+          label: "Aggregator integrations needed",
+          options: [
+            { label: "Zomato", value: "zomato" },
+            { label: "Swiggy", value: "swiggy" },
+            { label: "Blinkit / Zepto", value: "quick_commerce" },
+            { label: "Uber Eats", value: "ubereats" },
+            { label: "Dunzo", value: "dunzo" },
+          ],
+        },
+        {
+          id: "gst_invoicing",
+          type: "boolean",
+          label: "Need automated GST invoicing?",
+          required: true,
+        },
+      ],
+    },
+    {
+      id: "restaurant-extras",
+      title: "Additional Features",
+      questions: [
+        {
+          id: "feedback_system",
+          type: "boolean",
+          label: "Need customer feedback/rating system?",
+        },
+        {
+          id: "feedback_channels",
+          type: "multiselect",
+          label: "Feedback collection channels",
+          showIf: [{ questionId: "feedback_system", op: "truthy", value: true }],
+          options: [
+            { label: "In-app rating", value: "in_app" },
+            { label: "SMS link post-order", value: "sms" },
+            { label: "Email survey", value: "email" },
+            { label: "QR code on receipt", value: "qr" },
+            { label: "Tablet at exit", value: "tablet" },
+          ],
+        },
+        {
+          id: "multi_outlet_features",
+          type: "multiselect",
+          label: "Multi-outlet management features",
+          showIf: [{ questionId: "outlet_count", op: "gt", value: 1 }],
+          options: [
+            { label: "Centralized menu", value: "central_menu" },
+            { label: "Outlet-level pricing", value: "outlet_pricing" },
+            { label: "Central kitchen inventory", value: "central_kitchen" },
+            { label: "Inter-outlet transfers", value: "transfers" },
+            { label: "Consolidated reporting", value: "consolidated_reports" },
+            { label: "Role-based outlet access", value: "outlet_access" },
+          ],
+        },
+      ],
+    },
+  ],
+  uploadRequirements: [
+    {
+      category: "branding",
+      label: "Restaurant Logo & Brand Guidelines",
+      required: true,
+      accept: ["image/png", "image/jpeg", "image/svg+xml", "application/zip"],
+      maxSizeMB: 25,
+      multiple: true,
+    },
+    {
+      category: "data",
+      label: "Current Menu (with prices)",
+      required: true,
+      description: "PDF/XLSX with menu items, categories, prices",
+      accept: ["application/pdf", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+      maxSizeMB: 15,
+    },
+    {
+      category: "data",
+      label: "Outlet Locations List",
+      required: true,
+      accept: ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/pdf"],
+      maxSizeMB: 5,
+    },
+    {
+      category: "documents",
+      label: "FSSAI License",
+      required: true,
+      accept: ["application/pdf", "image/png", "image/jpeg"],
+      maxSizeMB: 10,
+    },
+    {
+      category: "reference",
+      label: "Reference Apps (Zomato, etc.)",
+      description: "Screenshots of competitor/reference apps you like",
+      accept: ["image/png", "image/jpeg", "application/zip"],
+      maxSizeMB: 25,
+      multiple: true,
+    },
+  ],
+  workflowRequirements: [
+    {
+      flow: "customer",
+      label: "Order Journey",
+      required: true,
+      defaultStages: ["Browse Menu", "Add to Cart", "Checkout", "Payment", "Kitchen", "Ready", "Pickup/Delivery", "Feedback"],
+    },
+    {
+      flow: "payment",
+      label: "Payment Flow",
+      required: true,
+      defaultStages: ["Bill Generate", "Payment Attempt", "Success/Fail", "GST Invoice", "Settlement"],
+    },
+    {
+      flow: "verification",
+      label: "Order Verification",
+      defaultStages: ["Customer Details", "Address Pin", "OTP", "Confirm"],
+    },
+    {
+      flow: "reporting",
+      label: "Daily Sales & Inventory Reports",
+      required: true,
+      defaultStages: ["End-of-day Close", "Sales Summary", "Inventory Reconcile", "Owner Review"],
+    },
+    {
+      flow: "staff",
+      label: "Staff Workflow",
+      defaultStages: ["Check-in", "Section Assign", "Order Serve", "Table Clear", "Check-out"],
+    },
+  ],
+};

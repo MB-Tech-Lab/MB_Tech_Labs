@@ -132,7 +132,7 @@ export function Hero() {
           className="mt-9 flex flex-col sm:flex-row items-center gap-3"
         >
           <a
-            href="#contact"
+            href="/start-project"
             className="group inline-flex items-center gap-2 rounded-xl bg-cyan text-ink font-semibold text-[14.5px] px-6 py-3.5 hover:bg-cyan-soft transition-all duration-300 hover:shadow-[0_12px_40px_-8px_rgba(37,214,255,0.65)]"
           >
             Start Your Project
