@@ -466,6 +466,18 @@ export function SrgProvider({ children }: { children: ReactNode }) {
       // generate a local submission ID (Django will assign the real one)
       const localId = `local_${Date.now().toString(36)}`;
       dispatch({ type: "MARK_SUBMITTED", payload: { submissionId: localId } });
+      // Bridge: ingest into admin system (mbtl_submissions) so the
+      // Project Control Center can pick it up. This runs entirely in
+      // the browser — no backend involved.
+      try {
+        // Lazy import to avoid circular deps at module load
+        const { ingestSrgSubmission } = await import(
+          "../../admin/services/seed"
+        );
+        ingestSrgSubmission(payload);
+      } catch (e) {
+        console.warn("[SRG] Failed to bridge submission to admin:", e);
+      }
       return { ok: true, submissionId: localId };
     } catch (e) {
       return {
