@@ -13,28 +13,29 @@ export type ProjectStatus =
   | "New"
   | "Reviewing"
   | "Meeting Scheduled"
-  | "Proposal Ready"
-  | "Quotation Sent"
-  | "Negotiation"
   | "Approved"
-  | "Development"
-  | "Testing"
-  | "Delivered"
-  | "Completed"
-  | "Rejected";
+  | "Rejected"
+  | "Archived";
 
+/**
+ * Phase 1 lifecycle: a simplified flow used by the Project Request
+ * Dashboard. Later phases will extend this with proposal, quotation,
+ * development, testing, delivery, and completion statuses.
+ */
 export const PROJECT_STATUS_FLOW: ProjectStatus[] = [
   "New",
   "Reviewing",
   "Meeting Scheduled",
-  "Proposal Ready",
-  "Quotation Sent",
-  "Negotiation",
   "Approved",
-  "Development",
-  "Testing",
-  "Delivered",
-  "Completed",
+  "Rejected",
+  "Archived",
+];
+
+/** Statuses that count as "open" (not yet decided) for the dashboard. */
+export const OPEN_STATUSES: ProjectStatus[] = [
+  "New",
+  "Reviewing",
+  "Meeting Scheduled",
 ];
 
 export type Priority = "Low" | "Medium" | "High" | "Critical";
@@ -263,6 +264,17 @@ export interface AdminNotification {
 
 /* --------------------------- Stats --------------------------- */
 
+/**
+ * Phase 1 dashboard stats. Field names are stable (used by storage and
+ * context) but the semantic meaning is:
+ *   - totalLeads       -> Total Project Requests
+ *   - newSubmissions   -> New Requests
+ *   - inReview         -> Under Review
+ *   - proposalPending  -> Meeting Scheduled
+ *   - approved         -> Approved
+ *   - inDevelopment    -> Rejected
+ *   - completed        -> Archived
+ */
 export interface DashboardStats {
   totalLeads: number;
   newSubmissions: number;

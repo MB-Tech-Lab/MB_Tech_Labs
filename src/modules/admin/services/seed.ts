@@ -23,7 +23,7 @@ import {
 import { getTemplate } from "../../srg/templates";
 import type { SrgSubmissionPayload } from "../../srg/types";
 
-const SEED_FLAG = "mbtl_seeded_v1";
+const SEED_FLAG = "mbtl_seeded_v2";
 
 /* --------------------------- Seed data --------------------------- */
 
@@ -292,7 +292,7 @@ const SEED_SUBMISSIONS: AdminSubmission[] = [
         ],
       },
     },
-    status: "Proposal Ready",
+    status: "Meeting Scheduled",
     priority: "High",
     assignedTeam: {
       "Project Manager": "tm_1",
@@ -316,7 +316,7 @@ const SEED_SUBMISSIONS: AdminSubmission[] = [
     timeline: [
       { status: "New", timestamp: daysAgo(5) },
       { status: "Reviewing", timestamp: daysAgo(4) },
-      { status: "Proposal Ready", timestamp: daysAgo(3) },
+      { status: "Meeting Scheduled", timestamp: daysAgo(3) },
     ],
   },
   {
@@ -538,7 +538,7 @@ const SEED_SUBMISSIONS: AdminSubmission[] = [
         ],
       },
     },
-    status: "Quotation Sent",
+    status: "Meeting Scheduled",
     priority: "Medium",
     assignedTeam: {
       "Project Manager": "tm_1",
@@ -581,8 +581,8 @@ const SEED_SUBMISSIONS: AdminSubmission[] = [
       { status: "New", timestamp: daysAgo(8) },
       { status: "Reviewing", timestamp: daysAgo(7) },
       { status: "Meeting Scheduled", timestamp: daysAgo(6) },
-      { status: "Proposal Ready", timestamp: daysAgo(5) },
-      { status: "Quotation Sent", timestamp: daysAgo(3) },
+      { status: "Meeting Scheduled", timestamp: daysAgo(5) },
+      { status: "Meeting Scheduled", timestamp: daysAgo(3) },
     ],
   },
   {
@@ -686,7 +686,7 @@ const SEED_SUBMISSIONS: AdminSubmission[] = [
         ],
       },
     },
-    status: "Development",
+    status: "Approved",
     priority: "High",
     assignedTeam: {
       "Project Manager": "tm_1",
@@ -730,11 +730,11 @@ const SEED_SUBMISSIONS: AdminSubmission[] = [
       { status: "New", timestamp: daysAgo(20) },
       { status: "Reviewing", timestamp: daysAgo(19) },
       { status: "Meeting Scheduled", timestamp: daysAgo(18) },
-      { status: "Proposal Ready", timestamp: daysAgo(18) },
-      { status: "Quotation Sent", timestamp: daysAgo(16) },
-      { status: "Negotiation", timestamp: daysAgo(15) },
+      { status: "Meeting Scheduled", timestamp: daysAgo(18) },
+      { status: "Meeting Scheduled", timestamp: daysAgo(16) },
+      { status: "Reviewing", timestamp: daysAgo(15) },
       { status: "Approved", timestamp: daysAgo(14) },
-      { status: "Development", timestamp: daysAgo(12) },
+      { status: "Approved", timestamp: daysAgo(12) },
     ],
   },
   {
@@ -817,7 +817,7 @@ const SEED_SUBMISSIONS: AdminSubmission[] = [
         ],
       },
     },
-    status: "Completed",
+    status: "Approved",
     priority: "Low",
     assignedTeam: {
       "Project Manager": "tm_1",
@@ -856,10 +856,10 @@ const SEED_SUBMISSIONS: AdminSubmission[] = [
       { status: "New", timestamp: daysAgo(35) },
       { status: "Reviewing", timestamp: daysAgo(34) },
       { status: "Approved", timestamp: daysAgo(32) },
-      { status: "Development", timestamp: daysAgo(28) },
-      { status: "Testing", timestamp: daysAgo(7) },
-      { status: "Delivered", timestamp: daysAgo(3) },
-      { status: "Completed", timestamp: daysAgo(2) },
+      { status: "Approved", timestamp: daysAgo(28) },
+      { status: "Approved", timestamp: daysAgo(7) },
+      { status: "Approved", timestamp: daysAgo(3) },
+      { status: "Approved", timestamp: daysAgo(2) },
     ],
   },
 ];

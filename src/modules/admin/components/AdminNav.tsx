@@ -7,12 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
   Inbox,
-  FolderKanban,
   Users,
-  UserCircle,
-  FileText,
-  BarChart3,
-  Settings,
   Search,
   Bell,
   Menu,
@@ -26,15 +21,15 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useAdmin } from "../context/AdminContext";
 
+/**
+ * Phase 1 navigation — a focused Project Request Inbox.
+ * Only Dashboard, Project Requests, and Clients. Team, Quotations,
+ * Reports, and Settings will return in later phases.
+ */
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { label: "Submissions", href: "/admin/submissions", icon: Inbox },
-  { label: "Projects", href: "/admin/projects", icon: FolderKanban },
+  { label: "Project Requests", href: "/admin/submissions", icon: Inbox },
   { label: "Clients", href: "/admin/clients", icon: Users },
-  { label: "Team", href: "/admin/team", icon: UserCircle },
-  { label: "Quotations", href: "/admin/quotations", icon: FileText },
-  { label: "Reports", href: "/admin/reports", icon: BarChart3 },
-  { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 function timeAgo(ts: number): string {
@@ -282,22 +277,9 @@ export function AdminNav() {
                         </p>
                       </div>
                       <div className="py-1">
-                        {[
-                          { label: "Admin Profile", href: "/admin/profile", icon: UserCircle },
-                          { label: "Settings", href: "/admin/settings", icon: Settings },
-                        ].map((item) => {
-                          const Icon = item.icon;
-                          return (
-                            <Link
-                              key={item.href}
-                              href={item.href}
-                              className="flex items-center gap-2.5 px-4 py-2 text-[12.5px] text-white/75 hover:bg-white/[0.04] hover:text-white transition-colors"
-                            >
-                              <Icon className="h-3.5 w-3.5" />
-                              {item.label}
-                            </Link>
-                          );
-                        })}
+                        <div className="px-4 py-2 text-[11px] uppercase tracking-wider text-white/40">
+                          Phase 1 · Request Inbox
+                        </div>
                         <Link
                           href="/"
                           className="flex items-center gap-2.5 px-4 py-2 text-[12.5px] text-rose-300 hover:bg-rose-400/10 transition-colors border-t border-white/5"

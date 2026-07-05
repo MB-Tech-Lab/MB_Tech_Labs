@@ -138,24 +138,19 @@ export function computeStats(subs: AdminSubmission[]): DashboardStats {
         stats.newSubmissions++;
         break;
       case "Reviewing":
-      case "Meeting Scheduled":
         stats.inReview++;
         break;
-      case "Proposal Ready":
-      case "Quotation Sent":
-      case "Negotiation":
-        stats.proposalPending++;
+      case "Meeting Scheduled":
+        stats.proposalPending++; // reused as "Meeting Scheduled" count for Phase 1
         break;
       case "Approved":
         stats.approved++;
         break;
-      case "Development":
-      case "Testing":
-        stats.inDevelopment++;
+      case "Rejected":
+        stats.inDevelopment++; // reused as "Rejected" count for Phase 1
         break;
-      case "Delivered":
-      case "Completed":
-        stats.completed++;
+      case "Archived":
+        stats.completed++; // reused as "Archived" count for Phase 1
         break;
     }
   });

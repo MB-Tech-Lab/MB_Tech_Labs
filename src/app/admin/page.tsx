@@ -4,19 +4,14 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Inbox,
-  FileText,
-  CheckCircle2,
-  Code2,
-  Trophy,
-  Users,
-  TrendingUp,
-  ArrowRight,
-  ArrowUpRight,
   Eye,
-  UserPlus,
-  FileCheck,
-  Calculator,
+  CalendarClock,
+  CheckCircle2,
+  XCircle,
+  Archive,
   Sparkles,
+  ArrowRight,
+  Clock,
 } from "lucide-react";
 import { useAdmin } from "@/modules/admin/context/AdminContext";
 import {
@@ -27,45 +22,35 @@ import {
   PageTransition,
   EmptyState,
 } from "@/modules/admin/components/ui";
-import type { ProjectStatus } from "@/modules/admin/types";
 
-const STATUS_FILTERS: { label: string; value: ProjectStatus | "all" }[] = [
-  { label: "All", value: "all" },
-  { label: "New", value: "New" },
-  { label: "Reviewing", value: "Reviewing" },
-  { label: "Proposal", value: "Proposal Ready" },
-  { label: "Quotation", value: "Quotation Sent" },
-  { label: "Approved", value: "Approved" },
-  { label: "Development", value: "Development" },
-  { label: "Completed", value: "Completed" },
-];
+/* --------------------------- Phase 1 stat cards --------------------------- */
 
 const STATS = [
   {
-    label: "Total Leads",
+    label: "Total Project Requests",
     key: "totalLeads" as const,
-    icon: TrendingUp,
+    icon: Inbox,
     accent: "from-cyan/15 to-cyan/5",
     iconColor: "text-cyan",
   },
   {
-    label: "New Submissions",
+    label: "New Requests",
     key: "newSubmissions" as const,
-    icon: Inbox,
+    icon: Sparkles,
     accent: "from-blue-400/15 to-blue-400/5",
     iconColor: "text-blue-200",
   },
   {
-    label: "In Review",
+    label: "Under Review",
     key: "inReview" as const,
     icon: Eye,
     accent: "from-violet-400/15 to-violet-400/5",
     iconColor: "text-violet-200",
   },
   {
-    label: "Proposal Pending",
+    label: "Meeting Scheduled",
     key: "proposalPending" as const,
-    icon: FileText,
+    icon: CalendarClock,
     accent: "from-amber-400/15 to-amber-400/5",
     iconColor: "text-amber-200",
   },
@@ -77,18 +62,11 @@ const STATS = [
     iconColor: "text-emerald-200",
   },
   {
-    label: "In Development",
+    label: "Rejected",
     key: "inDevelopment" as const,
-    icon: Code2,
-    accent: "from-cyan/15 to-cyan/5",
-    iconColor: "text-cyan-soft",
-  },
-  {
-    label: "Completed",
-    key: "completed" as const,
-    icon: Trophy,
-    accent: "from-teal-400/15 to-teal-400/5",
-    iconColor: "text-teal-200",
+    icon: XCircle,
+    accent: "from-rose-400/15 to-rose-400/5",
+    iconColor: "text-rose-200",
   },
 ];
 
@@ -103,6 +81,11 @@ function formatDate(ts: number): string {
 export default function AdminHome() {
   const { stats, searchResults, search } = useAdmin();
 
+  // Hide archived requests from the dashboard list by default
+  const visibleRequests = search
+    ? searchResults
+    : searchResults.filter((s) => s.status !== "Archived");
+
   return (
     <PageTransition>
       {/* Page header */}
@@ -110,20 +93,21 @@ export default function AdminHome() {
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan/25 bg-cyan/[0.06] px-3 py-1 text-[10.5px] font-medium uppercase tracking-[0.18em] text-cyan-soft">
             <Sparkles className="h-3 w-3" />
-            Control Center
+            Phase 1 · Request Inbox
           </span>
         </div>
         <h1 className="mt-3 font-display text-2xl sm:text-3xl font-semibold text-white tracking-tight">
-          Project Control Center
+          Project Request Dashboard
         </h1>
         <p className="mt-1.5 text-[13.5px] text-white/55">
-          Review incoming submissions, assign teams, build proposals, and track
-          projects from discovery to delivery.
+          Review incoming software project requests from clients. Decisions
+          about team, proposals, quotations, and development happen in later
+          phases.
         </p>
       </div>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
         {STATS.map((stat, i) => {
           const Icon = stat.icon;
           return (
@@ -155,17 +139,17 @@ export default function AdminHome() {
         })}
       </div>
 
-      {/* Recent submissions table */}
+      {/* Project Requests list */}
       <AdminCard strong className="overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
           <div>
             <h2 className="font-display text-[15px] font-semibold text-white">
-              {search ? `Search Results (${searchResults.length})` : "Recent Submissions"}
+              {search ? `Search Results (${visibleRequests.length})` : "Project Requests"}
             </h2>
             <p className="text-[12px] text-white/45 mt-0.5">
               {search
                 ? `Matching "${search}"`
-                : "Latest project submissions from the SRG portal"}
+                : "Latest client project requests awaiting review"}
             </p>
           </div>
           <Link
@@ -177,148 +161,90 @@ export default function AdminHome() {
           </Link>
         </div>
 
-        {searchResults.length === 0 ? (
+        {visibleRequests.length === 0 ? (
           <EmptyState
             icon={<Inbox className="h-6 w-6" />}
-            title={search ? "No matches found" : "No submissions yet"}
+            title={search ? "No matches found" : "No project requests yet"}
             description={
               search
                 ? "Try a different search term."
-                : "Submissions from the Project Discovery Portal will appear here."
+                : "When clients submit the SRG form, their requests will appear here."
             }
           />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-white/8 text-[10.5px] uppercase tracking-[0.12em] text-white/40">
-                  <th className="px-5 py-2.5 font-medium">Submission ID</th>
-                  <th className="px-5 py-2.5 font-medium">Client</th>
-                  <th className="px-5 py-2.5 font-medium hidden md:table-cell">Project Type</th>
-                  <th className="px-5 py-2.5 font-medium">Priority</th>
-                  <th className="px-5 py-2.5 font-medium">Status</th>
-                  <th className="px-5 py-2.5 font-medium hidden lg:table-cell">Submitted</th>
-                  <th className="px-5 py-2.5 font-medium hidden xl:table-cell">Assigned To</th>
-                  <th className="px-5 py-2.5 font-medium text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {searchResults.slice(0, 12).map((sub, i) => {
-                  const assignedCount = Object.values(sub.assignedTeam).filter(
-                    Boolean
-                  ).length;
-                  return (
-                    <motion.tr
-                      key={sub.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.3, delay: i * 0.03 }}
-                      className="border-b border-white/5 hover:bg-white/[0.025] transition-colors group"
+          <div className="divide-y divide-white/5">
+            {visibleRequests.slice(0, 12).map((sub, i) => (
+              <motion.div
+                key={sub.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3, delay: i * 0.03 }}
+                className="px-5 py-4 hover:bg-white/[0.025] transition-colors group"
+              >
+                <div className="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-5">
+                  {/* Left: identity */}
+                  <div className="flex items-center gap-3 lg:w-[28%] min-w-0">
+                    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-cyan/25 to-cyan/5 border border-cyan/25 font-display font-semibold text-[11px] text-cyan-soft">
+                      {sub.client.fullName
+                        .split(" ")
+                        .map((n) => n[0])
+                        .slice(0, 2)
+                        .join("")}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-medium text-white truncate">
+                        {sub.projectName}
+                      </p>
+                      <p className="text-[11.5px] text-white/45 truncate">
+                        {sub.client.fullName} · {sub.client.company}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Middle: meta */}
+                  <div className="flex items-center gap-4 lg:gap-6 lg:flex-1 text-[11.5px] text-white/55 flex-wrap">
+                    <div className="min-w-0">
+                      <p className="text-[10px] uppercase tracking-wider text-white/35">
+                        Request ID
+                      </p>
+                      <p className="font-mono text-cyan-soft/80 text-[11px] truncate">
+                        {sub.id.slice(0, 18)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-white/35">
+                        Project Type
+                      </p>
+                      <p className="text-white/75 text-[11.5px]">
+                        {sub.templateName}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-white/35">
+                        Submitted
+                      </p>
+                      <p className="text-white/75 text-[11.5px] flex items-center gap-1">
+                        <Clock className="h-2.5 w-2.5" />
+                        {formatDate(sub.submittedAt)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Right: status + priority + action */}
+                  <div className="flex items-center gap-2 lg:ml-auto shrink-0">
+                    <PriorityBadge priority={sub.priority} />
+                    <StatusBadge status={sub.status} />
+                    <Link
+                      href={`/admin/submissions/${sub.id}`}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-cyan text-ink font-medium text-[12px] px-3 py-1.5 hover:bg-cyan-soft transition-all hover:shadow-[0_6px_20px_-4px_rgba(37,214,255,0.55)]"
                     >
-                      <td className="px-5 py-3">
-                        <Link
-                          href={`/admin/submissions/${sub.id}`}
-                          className="font-mono text-[11.5px] text-cyan-soft hover:text-cyan transition-colors"
-                        >
-                          {sub.id.slice(0, 14)}…
-                        </Link>
-                      </td>
-                      <td className="px-5 py-3">
-                        <div className="flex items-center gap-2.5">
-                          <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-cyan/25 to-cyan/5 border border-cyan/25 font-display font-semibold text-[10.5px] text-cyan-soft">
-                            {sub.client.fullName
-                              .split(" ")
-                              .map((n) => n[0])
-                              .slice(0, 2)
-                              .join("")}
-                          </span>
-                          <div className="min-w-0">
-                            <p className="text-[12.5px] font-medium text-white truncate">
-                              {sub.client.fullName}
-                            </p>
-                            <p className="text-[11px] text-white/45 truncate">
-                              {sub.client.company}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3 hidden md:table-cell">
-                        <span className="text-[12px] text-white/70">
-                          {sub.templateName}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3">
-                        <PriorityBadge priority={sub.priority} />
-                      </td>
-                      <td className="px-5 py-3">
-                        <StatusBadge status={sub.status} />
-                      </td>
-                      <td className="px-5 py-3 hidden lg:table-cell">
-                        <span className="text-[12px] text-white/55">
-                          {formatDate(sub.submittedAt)}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3 hidden xl:table-cell">
-                        {assignedCount > 0 ? (
-                          <div className="flex items-center gap-1">
-                            <div className="flex -space-x-1.5">
-                              {Object.values(sub.assignedTeam)
-                                .filter(Boolean)
-                                .slice(0, 3)
-                                .map((id, idx) => (
-                                  <span
-                                    key={idx}
-                                    className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-cyan/15 border border-ink text-[9px] font-medium text-cyan-soft"
-                                  >
-                                    {String.fromCharCode(65 + idx)}
-                                  </span>
-                                ))}
-                            </div>
-                            <span className="text-[11px] text-white/55 ml-1">
-                              {assignedCount}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-[11px] text-white/30">Unassigned</span>
-                        )}
-                      </td>
-                      <td className="px-5 py-3">
-                        <div className="flex items-center justify-end gap-1">
-                          <Link
-                            href={`/admin/submissions/${sub.id}`}
-                            aria-label="View"
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-white/50 hover:text-cyan hover:bg-cyan/10 transition-all"
-                          >
-                            <Eye className="h-3.5 w-3.5" />
-                          </Link>
-                          <Link
-                            href={`/admin/submissions/${sub.id}/team`}
-                            aria-label="Assign team"
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-white/50 hover:text-cyan hover:bg-cyan/10 transition-all"
-                          >
-                            <UserPlus className="h-3.5 w-3.5" />
-                          </Link>
-                          <Link
-                            href={`/admin/submissions/${sub.id}/proposal`}
-                            aria-label="Proposal"
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-white/50 hover:text-cyan hover:bg-cyan/10 transition-all"
-                          >
-                            <FileCheck className="h-3.5 w-3.5" />
-                          </Link>
-                          <Link
-                            href={`/admin/submissions/${sub.id}/quotation`}
-                            aria-label="Quotation"
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-white/50 hover:text-cyan hover:bg-cyan/10 transition-all"
-                          >
-                            <Calculator className="h-3.5 w-3.5" />
-                          </Link>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      Open Request
+                      <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
         )}
       </AdminCard>
