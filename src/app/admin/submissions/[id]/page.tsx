@@ -195,6 +195,18 @@ export default function SrgDetailPage({
           <AdminButton variant="ghost" size="sm" onClick={() => handleAction("Meeting scheduled", "Meeting Scheduled")} icon={<CalendarClock className="h-3.5 w-3.5" />}>
             Schedule
           </AdminButton>
+          <AdminButton variant="ghost" size="sm" onClick={() => { setActiveTab("proposal"); setActionTaken("Switched to Proposal tab"); setTimeout(() => setActionTaken(null), 2000); }} icon={<FileCheck className="h-3.5 w-3.5" />}>
+            Generate Proposal
+          </AdminButton>
+          <AdminButton variant="ghost" size="sm" onClick={() => { setActiveTab("quotation"); setActionTaken("Switched to Quotation tab"); setTimeout(() => setActionTaken(null), 2000); }} icon={<Calculator className="h-3.5 w-3.5" />}>
+            Generate Quotation
+          </AdminButton>
+          <AdminButton variant="ghost" size="sm" onClick={() => handleAction("Team assigned", submission.status === "New" ? "Reviewing" : submission.status)} icon={<UserPlus className="h-3.5 w-3.5" />}>
+            Assign Team
+          </AdminButton>
+          <AdminButton variant="primary" size="sm" onClick={() => handleAction("Converted to project", "Approved")} icon={<FolderKanban className="h-3.5 w-3.5" />}>
+            Convert to Project
+          </AdminButton>
           <AdminButton variant="ghost" size="sm" onClick={() => handleAction("Approved", "Approved")} icon={<Check className="h-3.5 w-3.5" />}>
             Approve
           </AdminButton>

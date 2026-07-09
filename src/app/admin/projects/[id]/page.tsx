@@ -18,6 +18,7 @@ import {
   Users,
   Code2,
   RefreshCw,
+  GitBranch,
   X,
 } from "lucide-react";
 import { useAdmin } from "@/modules/admin/context/AdminContext";
@@ -133,7 +134,9 @@ export default function ProjectDetailPage({
       value: "milestones",
       count: project.milestones.length,
     },
+    { label: "Timeline", value: "timeline" },
     { label: "Team", value: "team", count: assignedMembers.length },
+    { label: "Meetings", value: "meetings" },
     { label: "Files", value: "files" },
     { label: "Notes", value: "notes" },
   ];
@@ -766,6 +769,122 @@ export default function ProjectDetailPage({
                   </AdminButton>
                 }
               />
+            </AdminCard>
+          )}
+
+          {activeTab === "timeline" && (
+            <AdminCard className="p-5">
+              <SectionTitle
+                eyebrow="Lifecycle"
+                title="Project Timeline"
+                description="Stage-by-stage progress through the development lifecycle"
+                icon={<GitBranch className="h-4 w-4" />}
+              />
+              <div className="relative">
+                <div
+                  className="absolute left-[15px] top-2 bottom-2 w-px"
+                  style={{ background: "var(--admin-border)" }}
+                />
+                <ol className="space-y-1">
+                  {DEV_PROJECT_STAGES.map((stage, idx) => {
+                    const isDone = idx < currentStageIndex;
+                    const isCurrent = idx === currentStageIndex;
+                    const isFuture = idx > currentStageIndex;
+                    return (
+                      <li key={stage} className="relative flex items-start gap-3 py-2">
+                        <span
+                          className={`relative z-10 mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-[11px] font-mono ${
+                            isDone ? "text-white" : isCurrent ? "text-white" : "text-white/40"
+                          }`}
+                          style={{
+                            background: isDone || isCurrent ? "var(--admin-accent)" : "var(--admin-surface)",
+                            borderColor: isDone || isCurrent ? "var(--admin-accent)" : "var(--admin-border)",
+                          }}
+                        >
+                          {isDone ? "✓" : idx + 1}
+                        </span>
+                        <div className="flex-1 pt-1">
+                          <p
+                            className="text-[13px] font-medium"
+                            style={{ color: isFuture ? "var(--admin-text-muted)" : "var(--admin-text)" }}
+                          >
+                            {stage}
+                          </p>
+                          {isCurrent && (
+                            <p className="text-[11px] mt-0.5" style={{ color: "var(--admin-accent)" }}>
+                              Current stage
+                            </p>
+                          )}
+                          {isFuture && (
+                            <p className="text-[11px] mt-0.5" style={{ color: "var(--admin-text-muted)" }}>
+                              Pending
+                            </p>
+                          )}
+                          {isDone && (
+                            <p className="text-[11px] mt-0.5" style={{ color: "var(--admin-text-muted)" }}>
+                              Completed
+                            </p>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
+            </AdminCard>
+          )}
+
+          {activeTab === "meetings" && (
+            <AdminCard className="p-5">
+              <SectionTitle
+                eyebrow="Coordination"
+                title="Meetings & Schedule"
+                description="Upcoming and past meetings for this project"
+                icon={<Calendar className="h-4 w-4" />}
+              />
+              <div className="space-y-2">
+                {[
+                  { title: "Kickoff Call", date: "Scheduled — Jul 15, 2025", type: "Video", attendees: ["Aarav M.", "Priya S.", "Client"] },
+                  { title: "Sprint 1 Review", date: "Scheduled — Jul 29, 2025", type: "Video", attendees: ["Aarav M.", "Rohan K.", "Client"] },
+                  { title: "Design Review", date: "Completed — Jul 8, 2025", type: "In-person", attendees: ["Sara K.", "Client"] },
+                ].map((m, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 rounded-xl border p-3"
+                    style={{ borderColor: "var(--admin-border)", background: "var(--admin-surface)" }}
+                  >
+                    <span
+                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+                      style={{ background: "var(--admin-accent-bg)", color: "var(--admin-accent)" }}
+                    >
+                      <Calendar className="h-4 w-4" />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-medium" style={{ color: "var(--admin-text)" }}>
+                        {m.title}
+                      </p>
+                      <p className="text-[11px]" style={{ color: "var(--admin-text-muted)" }}>
+                        {m.date} · {m.type}
+                      </p>
+                    </div>
+                    <div className="flex -space-x-1.5">
+                      {m.attendees.map((a, j) => (
+                        <span
+                          key={j}
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[9px] font-medium border-2"
+                          style={{
+                            background: "var(--admin-accent-bg)",
+                            borderColor: "var(--admin-surface)",
+                            color: "var(--admin-accent)",
+                          }}
+                        >
+                          {a.split(" ").map((n) => n[0]).join("")}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </AdminCard>
           )}
 
