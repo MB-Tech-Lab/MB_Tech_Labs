@@ -10,8 +10,13 @@
 import type {
   AdminSubmission,
   AdminNotification,
-  ProjectStatus,
+  SrgStatus,
   Priority,
+  DevProject,
+  Invoice,
+  Meeting,
+  Client,
+  ActivityLog,
 } from "../types";
 import {
   loadSubmissions,
@@ -19,11 +24,16 @@ import {
   upsertSubmission,
   addNotification,
   generateId,
+  saveProjects,
+  saveInvoices,
+  saveMeetings,
+  saveClients,
+  saveActivities,
 } from "./storage";
 import { getTemplate } from "../../srg/templates";
 import type { SrgSubmissionPayload } from "../../srg/types";
 
-const SEED_FLAG = "mbtl_seeded_v2";
+const SEED_FLAG = "mbtl_seeded_v3";
 
 /* --------------------------- Seed data --------------------------- */
 
@@ -292,7 +302,7 @@ const SEED_SUBMISSIONS: AdminSubmission[] = [
         ],
       },
     },
-    status: "Meeting Scheduled",
+    status: "Proposal Ready",
     priority: "High",
     assignedTeam: {
       "Project Manager": "tm_1",
@@ -316,7 +326,7 @@ const SEED_SUBMISSIONS: AdminSubmission[] = [
     timeline: [
       { status: "New", timestamp: daysAgo(5) },
       { status: "Reviewing", timestamp: daysAgo(4) },
-      { status: "Meeting Scheduled", timestamp: daysAgo(3) },
+      { status: "Proposal Ready", timestamp: daysAgo(3) },
     ],
   },
   {
@@ -538,7 +548,7 @@ const SEED_SUBMISSIONS: AdminSubmission[] = [
         ],
       },
     },
-    status: "Meeting Scheduled",
+    status: "Quotation Sent",
     priority: "Medium",
     assignedTeam: {
       "Project Manager": "tm_1",
@@ -580,9 +590,9 @@ const SEED_SUBMISSIONS: AdminSubmission[] = [
     timeline: [
       { status: "New", timestamp: daysAgo(8) },
       { status: "Reviewing", timestamp: daysAgo(7) },
-      { status: "Meeting Scheduled", timestamp: daysAgo(6) },
-      { status: "Meeting Scheduled", timestamp: daysAgo(5) },
-      { status: "Meeting Scheduled", timestamp: daysAgo(3) },
+      { status: "Proposal Ready", timestamp: daysAgo(6) },
+      { status: "Proposal Ready", timestamp: daysAgo(5) },
+      { status: "Proposal Ready", timestamp: daysAgo(3) },
     ],
   },
   {
@@ -729,9 +739,9 @@ const SEED_SUBMISSIONS: AdminSubmission[] = [
     timeline: [
       { status: "New", timestamp: daysAgo(20) },
       { status: "Reviewing", timestamp: daysAgo(19) },
-      { status: "Meeting Scheduled", timestamp: daysAgo(18) },
-      { status: "Meeting Scheduled", timestamp: daysAgo(18) },
-      { status: "Meeting Scheduled", timestamp: daysAgo(16) },
+      { status: "Proposal Ready", timestamp: daysAgo(18) },
+      { status: "Proposal Ready", timestamp: daysAgo(18) },
+      { status: "Proposal Ready", timestamp: daysAgo(16) },
       { status: "Reviewing", timestamp: daysAgo(15) },
       { status: "Approved", timestamp: daysAgo(14) },
       { status: "Approved", timestamp: daysAgo(12) },
@@ -864,6 +874,473 @@ const SEED_SUBMISSIONS: AdminSubmission[] = [
   },
 ];
 
+/* --------------------------- Seed: Dev Projects --------------------------- */
+
+const SEED_PROJECTS: DevProject[] = [
+  {
+    id: "proj_seed_omni",
+    name: "Omni POS + Ordering Platform",
+    clientId: "client_seed_omni",
+    clientName: "Marco Rossi",
+    clientCompany: "Omni F&B Group",
+    submissionId: "sub_seed_omni_restaurant",
+    status: "Development",
+    priority: "High",
+    techStack: ["React", "React Native", "NestJS", "PostgreSQL", "AWS", "Docker"],
+    assignedTeam: {
+      "Project Manager": "tm_1",
+      "Frontend Developer": "tm_2",
+      "Backend Developer": "tm_3",
+      "UI Designer": "tm_4",
+      "QA Engineer": "tm_5",
+      "DevOps": "tm_6",
+    },
+    startDate: daysAgo(12),
+    estimatedEndDate: daysAgo(-90),
+    currentStage: "Development",
+    progress: 35,
+    budget: 92000,
+    currency: "USD",
+    description: "Multi-outlet POS, online ordering, KDS, loyalty, centralized menu management across 12 outlets.",
+    tasks: [
+      { id: "task_1", title: "POS terminal setup", description: "iPad POS with receipt printing", assigneeId: "tm_2", status: "Done", priority: "High", dueDate: daysAgo(-5), createdAt: daysAgo(12) },
+      { id: "task_2", title: "KDS integration", description: "Kitchen display system for order routing", assigneeId: "tm_3", status: "In Progress", priority: "High", dueDate: daysAgo(-10), createdAt: daysAgo(10) },
+      { id: "task_3", title: "Loyalty program", description: "Points + tiers + cashback", assigneeId: "tm_2", status: "To Do", priority: "Medium", dueDate: daysAgo(-30), createdAt: daysAgo(5) },
+      { id: "task_4", title: "Aggregator integration", description: "Zomato + Swiggy order sync", assigneeId: "tm_3", status: "Review", priority: "Medium", dueDate: daysAgo(-15), createdAt: daysAgo(8) },
+    ],
+    milestones: [
+      { id: "ms_1", title: "POS MVP at Downtown outlet", description: "Single outlet live with POS", dueDate: daysAgo(-5), completed: true, completedAt: daysAgo(3) },
+      { id: "ms_2", title: "KDS pilot", description: "Kitchen display at 2 outlets", dueDate: daysAgo(10), completed: false },
+      { id: "ms_3", title: "Online ordering launch", description: "Web + app ordering live", dueDate: daysAgo(-45), completed: false },
+      { id: "ms_4", title: "All 12 outlets live", description: "Full rollout", dueDate: daysAgo(-90), completed: false },
+    ],
+    notes: "6-week sprint 1 in progress. KDS pilot at Downtown outlet live.",
+    createdAt: daysAgo(14),
+    updatedAt: daysAgo(1),
+  },
+  {
+    id: "proj_seed_madrasa",
+    name: "Madrasa Hub — Community Platform",
+    clientId: "client_seed_madrasa",
+    clientName: "Imam Yusuf Abdullah",
+    clientCompany: "Madrasa Hub",
+    submissionId: "sub_seed_madrasa_app",
+    status: "Maintenance",
+    priority: "Low",
+    techStack: ["React", "React Native", "Node.js", "PostgreSQL", "Vercel"],
+    assignedTeam: {
+      "Project Manager": "tm_1",
+      "Frontend Developer": "tm_8",
+      "UI Designer": "tm_10",
+      "QA Engineer": "tm_5",
+    },
+    startDate: daysAgo(33),
+    estimatedEndDate: daysAgo(-3),
+    currentStage: "Maintenance",
+    progress: 100,
+    budget: 27000,
+    currency: "USD",
+    description: "Community platform with madrasa module, events, attendance, fees, and mobile app.",
+    tasks: [
+      { id: "task_5", title: "Bug fixes — attendance sync", description: "Fix offline attendance sync issue", assigneeId: "tm_8", status: "Done", priority: "Medium", dueDate: daysAgo(2), createdAt: daysAgo(10) },
+      { id: "task_6", title: "Feature: exam report cards", description: "Add PDF report card generation", assigneeId: "tm_8", status: "In Progress", priority: "Low", dueDate: daysAgo(-7), createdAt: daysAgo(3) },
+    ],
+    milestones: [
+      { id: "ms_5", title: "Platform launch", description: "30 units live", dueDate: daysAgo(3), completed: true, completedAt: daysAgo(3) },
+    ],
+    notes: "Delivered successfully. Now in maintenance with monthly retainer.",
+    createdAt: daysAgo(35),
+    updatedAt: daysAgo(2),
+  },
+  {
+    id: "proj_seed_helios",
+    name: "Helios ERP Modernization",
+    clientId: "client_seed_helios",
+    clientName: "Rajiv Menon",
+    clientCompany: "Helios Logistics",
+    submissionId: "sub_seed_helios_erp",
+    status: "Planning",
+    priority: "High",
+    techStack: ["Next.js", "NestJS", "PostgreSQL", "AWS", "Redis"],
+    assignedTeam: {
+      "Project Manager": "tm_1",
+      "Backend Developer": "tm_3",
+      "Business Analyst": "tm_7",
+    },
+    startDate: daysAgo(3),
+    estimatedEndDate: daysAgo(-150),
+    currentStage: "Planning",
+    progress: 10,
+    budget: 120000,
+    currency: "USD",
+    description: "Replace 14 legacy systems with a unified ERP covering finance, inventory, HR, and operations.",
+    tasks: [
+      { id: "task_7", title: "Requirements workshop", description: "2-day workshop with all department heads", assigneeId: "tm_7", status: "Done", priority: "High", dueDate: daysAgo(1), createdAt: daysAgo(5) },
+      { id: "task_8", title: "Architecture design", description: "Microservices architecture for 14 modules", assigneeId: "tm_3", status: "In Progress", priority: "High", dueDate: daysAgo(-14), createdAt: daysAgo(3) },
+      { id: "task_9", title: "Data migration plan", description: "Plan for migrating Tally data", assigneeId: "tm_7", status: "To Do", priority: "Medium", dueDate: daysAgo(-21), createdAt: daysAgo(1) },
+    ],
+    milestones: [
+      { id: "ms_6", title: "Architecture sign-off", description: "CFO + CTO approval on architecture", dueDate: daysAgo(-14), completed: false },
+      { id: "ms_7", title: "Finance module MVP", description: "GL + AP + AR live", dueDate: daysAgo(-60), completed: false },
+      { id: "ms_8", title: "Full ERP rollout", description: "All 14 branches migrated", dueDate: daysAgo(-150), completed: false },
+    ],
+    notes: "Architecture in progress. Client wants Tally data migration within first 3 months.",
+    createdAt: daysAgo(5),
+    updatedAt: daysAgo(1),
+  },
+  {
+    id: "proj_seed_atlas",
+    name: "Atlas Analytics SaaS",
+    clientId: "client_seed_atlas",
+    clientName: "Sarah Chen",
+    clientCompany: "Atlas Analytics",
+    submissionId: "sub_seed_atlas_saaS",
+    status: "UI/UX",
+    priority: "High",
+    techStack: ["React", "Next.js", "Node.js", "ClickHouse", "GCP"],
+    assignedTeam: {
+      "Project Manager": "tm_1",
+      "Frontend Developer": "tm_2",
+      "Backend Developer": "tm_3",
+      "UI Designer": "tm_4",
+    },
+    startDate: daysAgo(7),
+    estimatedEndDate: daysAgo(-100),
+    currentStage: "UI/UX",
+    progress: 20,
+    budget: 85000,
+    currency: "USD",
+    description: "Product analytics SaaS processing 2B+ events daily with AI-generated insight summaries.",
+    tasks: [
+      { id: "task_10", title: "Design system setup", description: "Component library + design tokens", assigneeId: "tm_4", status: "In Progress", priority: "High", dueDate: daysAgo(-3), createdAt: daysAgo(7) },
+      { id: "task_11", title: "Dashboard wireframes", description: "Main analytics dashboard + drill-downs", assigneeId: "tm_4", status: "In Progress", priority: "High", dueDate: daysAgo(-7), createdAt: daysAgo(5) },
+      { id: "task_12", title: "Event ingestion pipeline", description: "Kafka + ClickHouse pipeline", assigneeId: "tm_3", status: "To Do", priority: "High", dueDate: daysAgo(-21), createdAt: daysAgo(3) },
+    ],
+    milestones: [
+      { id: "ms_9", title: "Design approval", description: "Client signs off on UI/UX", dueDate: daysAgo(-7), completed: false },
+      { id: "ms_10", title: "MVP launch", description: "Core analytics + dashboards", dueDate: daysAgo(-60), completed: false },
+    ],
+    notes: "Strong technical team on client side — will co-build. Video calls preferred.",
+    createdAt: daysAgo(8),
+    updatedAt: daysAgo(1),
+  },
+];
+
+/* --------------------------- Seed: Clients --------------------------- */
+
+const SEED_CLIENTS: Client[] = [
+  {
+    id: "client_seed_helios",
+    company: "Helios Logistics Pvt Ltd",
+    contactPerson: "Rajiv Menon",
+    email: "rajiv.menon@helioslogistics.com",
+    phone: "+91 98765 43210",
+    website: "https://helioslogistics.com",
+    industry: "Logistics / Supply Chain",
+    address: "Mumbai, India",
+    status: "Active",
+    createdAt: daysAgo(2),
+    notes: "Enterprise client. Migrating from Tally + custom PHP. High urgency.",
+    submissionIds: ["sub_seed_helios_erp"],
+    projectIds: ["proj_seed_helios"],
+  },
+  {
+    id: "client_seed_atlas",
+    company: "Atlas Analytics Inc",
+    contactPerson: "Sarah Chen",
+    email: "sarah.chen@atlasanalytics.io",
+    phone: "+1 415 555 0182",
+    website: "https://atlasanalytics.io",
+    industry: "Technology / SaaS",
+    address: "San Francisco, USA",
+    status: "Active",
+    createdAt: daysAgo(5),
+    notes: "US-based SaaS startup. Strong technical team. Prefers video calls.",
+    submissionIds: ["sub_seed_atlas_saaS"],
+    projectIds: ["proj_seed_atlas"],
+  },
+  {
+    id: "client_seed_nova",
+    company: "Nova Legal Partners LLP",
+    contactPerson: "David Okonkwo",
+    email: "david@novalegal.com",
+    phone: "+44 20 7946 0958",
+    website: "https://novalegal.com",
+    industry: "Legal / Professional Services",
+    address: "London, UK",
+    status: "Prospect",
+    createdAt: daysAgo(1),
+    notes: "Hot lead via referral. AI legal assistant. Needs quick response.",
+    submissionIds: ["sub_seed_nova_legal"],
+    projectIds: [],
+  },
+  {
+    id: "client_seed_zahra",
+    company: "Zahra Foundation",
+    contactPerson: "Zahra Al-Rashid",
+    email: "zahra@zahrafoundation.org",
+    phone: "+971 50 123 4567",
+    website: "https://zahrafoundation.org",
+    industry: "Non-profit / NGO",
+    address: "Dubai, UAE",
+    status: "Active",
+    createdAt: daysAgo(8),
+    notes: "Mission-driven NGO. Flexible timeline, tight budget. 5% NGO discount.",
+    submissionIds: ["sub_seed_zahra_trust"],
+    projectIds: [],
+  },
+  {
+    id: "client_seed_omni",
+    company: "Omni F&B Group LLC",
+    contactPerson: "Marco Rossi",
+    email: "marco@omnifnb.com",
+    phone: "+971 4 123 4567",
+    website: "https://omnifnb.com",
+    industry: "Restaurant / F&B",
+    address: "Dubai, UAE",
+    status: "Active",
+    createdAt: daysAgo(20),
+    notes: "12-outlet F&B group. VAT 5% applicable. Hybrid deployment.",
+    submissionIds: ["sub_seed_omni_restaurant"],
+    projectIds: ["proj_seed_omni"],
+  },
+  {
+    id: "client_seed_madrasa",
+    company: "Madrasa Hub",
+    contactPerson: "Imam Yusuf Abdullah",
+    email: "yusuf@madrasahub.org",
+    phone: "+44 7700 900123",
+    website: "https://madrasahub.org",
+    industry: "Religious / Community",
+    address: "London, UK",
+    status: "Active",
+    createdAt: daysAgo(35),
+    notes: "Community platform delivered. Monthly maintenance retainer.",
+    submissionIds: ["sub_seed_madrasa_app"],
+    projectIds: ["proj_seed_madrasa"],
+  },
+];
+
+/* --------------------------- Seed: Invoices --------------------------- */
+
+const SEED_INVOICES: Invoice[] = [
+  {
+    id: "inv_seed_1",
+    invoiceNumber: "INV-2025-001",
+    clientId: "client_seed_omni",
+    clientName: "Marco Rossi",
+    clientCompany: "Omni F&B Group",
+    amount: 27600,
+    currency: "USD",
+    status: "Paid",
+    issueDate: daysAgo(14),
+    dueDate: daysAgo(0),
+    paidDate: daysAgo(2),
+    projectId: "proj_seed_omni",
+    items: [
+      { description: "40% advance — Omni POS + Ordering Platform", amount: 27600 },
+    ],
+    notes: "VAT 5% included",
+  },
+  {
+    id: "inv_seed_2",
+    invoiceNumber: "INV-2025-002",
+    clientId: "client_seed_madrasa",
+    clientName: "Imam Yusuf Abdullah",
+    clientCompany: "Madrasa Hub",
+    amount: 13500,
+    currency: "USD",
+    status: "Paid",
+    issueDate: daysAgo(33),
+    dueDate: daysAgo(18),
+    paidDate: daysAgo(20),
+    projectId: "proj_seed_madrasa",
+    items: [
+      { description: "50% advance — Madrasa Hub Platform", amount: 13500 },
+    ],
+  },
+  {
+    id: "inv_seed_3",
+    invoiceNumber: "INV-2025-003",
+    clientId: "client_seed_madrasa",
+    clientName: "Imam Yusuf Abdullah",
+    clientCompany: "Madrasa Hub",
+    amount: 13500,
+    currency: "USD",
+    status: "Paid",
+    issueDate: daysAgo(3),
+    dueDate: daysAgo(-12),
+    paidDate: daysAgo(1),
+    projectId: "proj_seed_madrasa",
+    items: [
+      { description: "50% final — Madrasa Hub Platform", amount: 13500 },
+    ],
+  },
+  {
+    id: "inv_seed_4",
+    invoiceNumber: "INV-2025-004",
+    clientId: "client_seed_omni",
+    clientName: "Marco Rossi",
+    clientCompany: "Omni F&B Group",
+    amount: 27600,
+    currency: "USD",
+    status: "Pending",
+    issueDate: daysAgo(5),
+    dueDate: daysAgo(-25),
+    projectId: "proj_seed_omni",
+    items: [
+      { description: "30% on MVP — Omni POS + Ordering Platform", amount: 27600 },
+    ],
+  },
+  {
+    id: "inv_seed_5",
+    invoiceNumber: "INV-2025-005",
+    clientId: "client_seed_atlas",
+    clientName: "Sarah Chen",
+    clientCompany: "Atlas Analytics Inc",
+    amount: 17000,
+    currency: "USD",
+    status: "Pending",
+    issueDate: daysAgo(3),
+    dueDate: daysAgo(-12),
+    projectId: "proj_seed_atlas",
+    items: [
+      { description: "20% advance — Atlas Analytics SaaS", amount: 17000 },
+    ],
+  },
+  {
+    id: "inv_seed_6",
+    invoiceNumber: "INV-2025-006",
+    clientId: "client_seed_zahra",
+    clientName: "Zahra Al-Rashid",
+    clientCompany: "Zahra Foundation",
+    amount: 12255,
+    currency: "USD",
+    status: "Overdue",
+    issueDate: daysAgo(15),
+    dueDate: daysAgo(1),
+    projectId: undefined,
+    items: [
+      { description: "30% advance — Zahra Foundation Portal", amount: 12255 },
+    ],
+    notes: "5% NGO discount applied. Tax-exempt.",
+  },
+  {
+    id: "inv_seed_7",
+    invoiceNumber: "INV-2025-007",
+    clientId: "client_seed_madrasa",
+    clientName: "Imam Yusuf Abdullah",
+    clientCompany: "Madrasa Hub",
+    amount: 500,
+    currency: "USD",
+    status: "Draft",
+    issueDate: daysAgo(0),
+    dueDate: daysAgo(-30),
+    items: [
+      { description: "Monthly maintenance retainer — December", amount: 500 },
+    ],
+  },
+];
+
+/* --------------------------- Seed: Meetings --------------------------- */
+
+const SEED_MEETINGS: Meeting[] = [
+  {
+    id: "mtg_seed_1",
+    title: "Helios ERP — Architecture Review",
+    type: "review",
+    clientId: "client_seed_helios",
+    clientName: "Rajiv Menon",
+    projectId: "proj_seed_helios",
+    date: Date.now() + 2 * 24 * 60 * 60 * 1000, // 2 days from now
+    duration: 90,
+    attendees: ["Aarav Mehta", "Rohan Kapoor", "Arjun Nair", "Rajiv Menon"],
+    location: "Google Meet",
+    notes: "Review microservices architecture proposal. CFO + CTO will join.",
+    status: "scheduled",
+  },
+  {
+    id: "mtg_seed_2",
+    title: "Atlas Analytics — Design Approval",
+    type: "client",
+    clientId: "client_seed_atlas",
+    clientName: "Sarah Chen",
+    projectId: "proj_seed_atlas",
+    date: Date.now() + 4 * 24 * 60 * 60 * 1000,
+    duration: 60,
+    attendees: ["Aarav Mehta", "Sara Khan", "Sarah Chen"],
+    location: "Zoom",
+    notes: "Walk through dashboard designs and get sign-off on UI direction.",
+    status: "scheduled",
+  },
+  {
+    id: "mtg_seed_3",
+    title: "Nova Legal — Discovery Call",
+    type: "kickoff",
+    clientId: "client_seed_nova",
+    clientName: "David Okonkwo",
+    date: Date.now() + 1 * 24 * 60 * 60 * 1000,
+    duration: 45,
+    attendees: ["Aarav Mehta", "Arjun Nair", "David Okonkwo"],
+    location: "Google Meet",
+    notes: "Initial discovery call. Understand legal RAG requirements.",
+    status: "scheduled",
+  },
+  {
+    id: "mtg_seed_4",
+    title: "Omni POS — Sprint Demo",
+    type: "review",
+    clientId: "client_seed_omni",
+    clientName: "Marco Rossi",
+    projectId: "proj_seed_omni",
+    date: Date.now() + 5 * 24 * 60 * 60 * 1000,
+    duration: 60,
+    attendees: ["Aarav Mehta", "Priya Sharma", "Rohan Kapoor", "Marco Rossi"],
+    location: "Google Meet",
+    notes: "Demo KDS pilot at Downtown outlet. Show online ordering progress.",
+    status: "scheduled",
+  },
+  {
+    id: "mtg_seed_5",
+    title: "Weekly Team Standup",
+    type: "internal",
+    date: Date.now() + 1 * 60 * 60 * 1000, // 1 hour from now
+    duration: 30,
+    attendees: ["Aarav Mehta", "Priya Sharma", "Rohan Kapoor", "Sara Khan"],
+    location: "Office / Meet",
+    notes: "Weekly sync across all active projects.",
+    status: "scheduled",
+  },
+  {
+    id: "mtg_seed_6",
+    title: "Zahra Foundation — Follow-up",
+    type: "follow-up",
+    clientId: "client_seed_zahra",
+    clientName: "Zahra Al-Rashid",
+    date: Date.now() - 2 * 24 * 60 * 60 * 1000, // 2 days ago
+    duration: 30,
+    attendees: ["Aarav Mehta", "Zahra Al-Rashid"],
+    location: "Phone",
+    notes: "Follow up on quotation. Client asked for payment plan options.",
+    status: "completed",
+  },
+];
+
+/* --------------------------- Seed: Activities --------------------------- */
+
+const SEED_ACTIVITIES: ActivityLog[] = [
+  { id: "act_1", type: "submission", action: "New submission", description: "Nova AI Legal Assistant submitted by David Okonkwo", timestamp: daysAgo(1), entityId: "sub_seed_nova_legal", entityType: "submission", actor: "System" },
+  { id: "act_2", type: "project", action: "Project created", description: "Helios ERP Modernization project created", timestamp: daysAgo(5), entityId: "proj_seed_helios", entityType: "project", actor: "Aarav Mehta" },
+  { id: "act_3", type: "invoice", action: "Invoice paid", description: "INV-2025-001 paid by Omni F&B Group ($27,600)", timestamp: daysAgo(2), entityId: "inv_seed_1", entityType: "invoice", actor: "System" },
+  { id: "act_4", type: "quotation", action: "Quotation sent", description: "Quotation sent to Zahra Foundation ($40,850)", timestamp: daysAgo(3), entityId: "sub_seed_zahra_trust", entityType: "submission", actor: "Aarav Mehta" },
+  { id: "act_5", type: "team", action: "Team assigned", description: "6 team members assigned to Omni POS project", timestamp: daysAgo(12), entityId: "proj_seed_omni", entityType: "project", actor: "Aarav Mehta" },
+  { id: "act_6", type: "meeting", action: "Meeting scheduled", description: "Architecture Review with Helios scheduled for +2 days", timestamp: daysAgo(1), entityId: "mtg_seed_1", entityType: "meeting", actor: "Aarav Mehta" },
+  { id: "act_7", type: "project", action: "Stage update", description: "Atlas Analytics moved to UI/UX stage", timestamp: daysAgo(3), entityId: "proj_seed_atlas", entityType: "project", actor: "Aarav Mehta" },
+  { id: "act_8", type: "invoice", action: "Invoice overdue", description: "INV-2025-006 is now overdue (Zahra Foundation)", timestamp: daysAgo(1), entityId: "inv_seed_6", entityType: "invoice", actor: "System" },
+  { id: "act_9", type: "submission", action: "Status changed", description: "Atlas Analytics marked as Proposal Ready", timestamp: daysAgo(3), entityId: "sub_seed_atlas_saaS", entityType: "submission", actor: "Aarav Mehta" },
+  { id: "act_10", type: "project", action: "Milestone completed", description: "POS MVP at Downtown outlet completed for Omni", timestamp: daysAgo(3), entityId: "proj_seed_omni", entityType: "project", actor: "Aarav Mehta" },
+];
+
 /* --------------------------- Seed runner --------------------------- */
 
 export function seedIfNeeded(): void {
@@ -872,6 +1349,11 @@ export function seedIfNeeded(): void {
   const existing = loadSubmissions();
   if (existing.length === 0) {
     saveSubmissions(SEED_SUBMISSIONS);
+    saveProjects(SEED_PROJECTS);
+    saveClients(SEED_CLIENTS);
+    saveInvoices(SEED_INVOICES);
+    saveMeetings(SEED_MEETINGS);
+    saveActivities(SEED_ACTIVITIES);
     // Add welcome notifications
     addNotification({
       type: "submission",
@@ -896,6 +1378,18 @@ export function seedIfNeeded(): void {
       title: "Team assigned",
       description: "Helios ERP Modernization — 3 members assigned",
       submissionId: "sub_seed_helios_erp",
+    });
+    addNotification({
+      type: "invoice",
+      title: "Invoice paid",
+      description: "INV-2025-001 paid by Omni F&B Group ($27,600)",
+      invoiceId: "inv_seed_1",
+    });
+    addNotification({
+      type: "meeting",
+      title: "Meeting reminder",
+      description: "Nova Legal — Discovery Call tomorrow at 10:00 AM",
+      submissionId: "sub_seed_nova_legal",
     });
   }
   localStorage.setItem(SEED_FLAG, "1");

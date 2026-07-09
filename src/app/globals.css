@@ -254,6 +254,40 @@
 }
 .pulse-ring { animation: pulse-ring 2.4s ease-out infinite; }
 
+/* ---------- Admin theme system (dark/light) ---------- */
+:root {
+  --admin-bg: #0F172A;
+  --admin-surface: #1E293B;
+  --admin-surface-2: #334155;
+  --admin-border: rgba(255, 255, 255, 0.08);
+  --admin-text: #F1F5F9;
+  --admin-text-secondary: #94A3B8;
+  --admin-text-muted: #64748B;
+  --admin-accent: #25D6FF;
+  --admin-accent-soft: #5EDBFF;
+}
+
+.admin-light {
+  --admin-bg: #F8FAFC;
+  --admin-surface: #FFFFFF;
+  --admin-surface-2: #F1F5F9;
+  --admin-border: #E2E8F0;
+  --admin-text: #0F172A;
+  --admin-text-secondary: #475569;
+  --admin-text-muted: #94A3B8;
+  --admin-accent: #0891B2;
+  --admin-accent-soft: #06B6D4;
+}
+
+.admin-bg { background-color: var(--admin-bg); }
+.admin-surface { background-color: var(--admin-surface); }
+.admin-surface-2 { background-color: var(--admin-surface-2); }
+.admin-text { color: var(--admin-text); }
+.admin-text-secondary { color: var(--admin-text-secondary); }
+.admin-text-muted { color: var(--admin-text-muted); }
+.admin-border { border-color: var(--admin-border); }
+.admin-accent { color: var(--admin-accent); }
+
 /* ---------- Reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

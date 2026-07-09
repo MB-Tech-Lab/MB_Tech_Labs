@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * Admin Context
- * -------------
- * Central state management for the Project Control Center.
- * Holds submissions, notifications, team members, and search state.
- * Auto-refreshes from localStorage on mount and exposes actions.
+ * Admin Context — Enterprise Edition
+ * -----------------------------------
+ * Central state management for the entire admin operating system.
+ * Holds submissions, clients, projects, invoices, meetings, activities,
+ * notifications, team members, and global search state.
  */
 import {
   createContext,
@@ -20,30 +20,51 @@ import type {
   AdminSubmission,
   AdminNotification,
   TeamMember,
-  ProjectStatus,
+  SrgStatus,
   Priority,
   DashboardStats,
   AssignedTeam,
   Proposal,
   Quotation,
+  Client,
+  DevProject,
+  Invoice,
+  Meeting,
+  ActivityLog,
 } from "../types";
 import {
   loadSubmissions,
   loadNotifications,
   loadTeamMembers,
+  loadClients,
+  loadProjects,
+  loadInvoices,
+  loadMeetings,
+  loadActivities,
   setStatus,
   setPriority,
   setAssignedTeam,
   updateSubmission,
+  updateProject,
   markNotificationRead,
   markAllNotificationsRead,
   addNotification,
+  addActivity,
   computeStats,
+  upsertClient,
+  upsertProject,
+  upsertInvoice,
+  upsertMeeting,
 } from "../services/storage";
 import { seedIfNeeded } from "../services/seed";
 
 interface AdminContextValue {
   submissions: AdminSubmission[];
+  clients: Client[];
+  projects: DevProject[];
+  invoices: Invoice[];
+  meetings: Meeting[];
+  activities: ActivityLog[];
   notifications: AdminNotification[];
   teamMembers: TeamMember[];
   stats: DashboardStats;
@@ -51,12 +72,23 @@ interface AdminContextValue {
   setSearch: (q: string) => void;
   searchResults: AdminSubmission[];
   refresh: () => void;
-  setStatusOf: (id: string, status: ProjectStatus, note?: string) => void;
+  // submission actions
+  setStatusOf: (id: string, status: SrgStatus, note?: string) => void;
   setPriorityOf: (id: string, priority: Priority) => void;
   assignTeam: (id: string, team: AssignedTeam) => void;
   updateProposal: (id: string, proposal: Proposal) => void;
   updateQuotation: (id: string, quotation: Quotation) => void;
   updateNotes: (id: string, notes: string) => void;
+  // project actions
+  updateDevProject: (id: string, patch: Partial<DevProject>) => void;
+  upsertDevProject: (project: DevProject) => void;
+  // client actions
+  upsertClientRecord: (client: Client) => void;
+  // invoice actions
+  upsertInvoiceRecord: (invoice: Invoice) => void;
+  // meeting actions
+  upsertMeetingRecord: (meeting: Meeting) => void;
+  // notifications
   markNotifRead: (id: string) => void;
   markAllNotifsRead: () => void;
 }
@@ -64,16 +96,28 @@ interface AdminContextValue {
 const AdminContext = createContext<AdminContextValue | null>(null);
 
 export function AdminProvider({ children }: { children: ReactNode }) {
-  // Lazy initializers read from localStorage on first render (client-only).
-  // This avoids setState-during-effect warnings while still hydrating
-  // immediately on mount.
   const [submissions, setSubmissions] = useState<AdminSubmission[]>(() =>
     typeof window !== "undefined" ? (seedIfNeeded(), loadSubmissions()) : []
+  );
+  const [clients, setClients] = useState<Client[]>(() =>
+    typeof window !== "undefined" ? loadClients() : []
+  );
+  const [projects, setProjects] = useState<DevProject[]>(() =>
+    typeof window !== "undefined" ? loadProjects() : []
+  );
+  const [invoices, setInvoices] = useState<Invoice[]>(() =>
+    typeof window !== "undefined" ? loadInvoices() : []
+  );
+  const [meetings, setMeetings] = useState<Meeting[]>(() =>
+    typeof window !== "undefined" ? loadMeetings() : []
+  );
+  const [activities, setActivities] = useState<ActivityLog[]>(() =>
+    typeof window !== "undefined" ? loadActivities() : []
   );
   const [notifications, setNotifications] = useState<AdminNotification[]>(() =>
     typeof window !== "undefined" ? loadNotifications() : []
   );
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(() =>
+  const [teamMembers] = useState<TeamMember[]>(() =>
     typeof window !== "undefined" ? loadTeamMembers() : []
   );
   const [search, setSearch] = useState("");
@@ -81,12 +125,15 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(() => {
     seedIfNeeded();
     setSubmissions(loadSubmissions());
+    setClients(loadClients());
+    setProjects(loadProjects());
+    setInvoices(loadInvoices());
+    setMeetings(loadMeetings());
+    setActivities(loadActivities());
     setNotifications(loadNotifications());
-    setTeamMembers(loadTeamMembers());
   }, []);
 
   useEffect(() => {
-    // refresh every 15 seconds in case other tabs (SRG) wrote
     const id = setInterval(refresh, 15000);
     const onStorage = () => refresh();
     window.addEventListener("storage", onStorage);
@@ -97,8 +144,16 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const setStatusOf = useCallback(
-    (id: string, status: ProjectStatus, note?: string) => {
+    (id: string, status: SrgStatus, note?: string) => {
       setStatus(id, status, note);
+      addActivity({
+        type: "submission",
+        action: "Status changed",
+        description: `Submission ${id} marked as ${status}`,
+        entityId: id,
+        entityType: "submission",
+        actor: "Admin",
+      });
       refresh();
     },
     [refresh]
@@ -156,6 +211,62 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     [refresh]
   );
 
+  const updateDevProject = useCallback(
+    (id: string, patch: Partial<DevProject>) => {
+      updateProject(id, patch);
+      addActivity({
+        type: "project",
+        action: "Project updated",
+        description: `Project ${id} updated`,
+        entityId: id,
+        entityType: "project",
+        actor: "Admin",
+      });
+      refresh();
+    },
+    [refresh]
+  );
+
+  const upsertDevProject = useCallback(
+    (project: DevProject) => {
+      upsertProject(project);
+      addActivity({
+        type: "project",
+        action: "Project created",
+        description: `Project ${project.name} created`,
+        entityId: project.id,
+        entityType: "project",
+        actor: "Admin",
+      });
+      refresh();
+    },
+    [refresh]
+  );
+
+  const upsertClientRecord = useCallback(
+    (client: Client) => {
+      upsertClient(client);
+      refresh();
+    },
+    [refresh]
+  );
+
+  const upsertInvoiceRecord = useCallback(
+    (invoice: Invoice) => {
+      upsertInvoice(invoice);
+      refresh();
+    },
+    [refresh]
+  );
+
+  const upsertMeetingRecord = useCallback(
+    (meeting: Meeting) => {
+      upsertMeeting(meeting);
+      refresh();
+    },
+    [refresh]
+  );
+
   const markNotifRead = useCallback(
     (id: string) => {
       markNotificationRead(id);
@@ -188,10 +299,18 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     );
   }, [submissions, search]);
 
-  const stats = useMemo(() => computeStats(submissions), [submissions]);
+  const stats = useMemo(
+    () => computeStats(submissions, projects, invoices, meetings),
+    [submissions, projects, invoices, meetings]
+  );
 
   const value: AdminContextValue = {
     submissions,
+    clients,
+    projects,
+    invoices,
+    meetings,
+    activities,
     notifications,
     teamMembers,
     stats,
@@ -205,6 +324,11 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     updateProposal,
     updateQuotation,
     updateNotes,
+    updateDevProject,
+    upsertDevProject,
+    upsertClientRecord,
+    upsertInvoiceRecord,
+    upsertMeetingRecord,
     markNotifRead,
     markAllNotifsRead,
   };

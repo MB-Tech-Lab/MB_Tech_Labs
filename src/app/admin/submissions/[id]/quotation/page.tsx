@@ -11,7 +11,8 @@ import {
   Calculator,
   Save,
   Eye,
-  FileText,
+  Download,
+  Printer,
 } from "lucide-react";
 import { useAdmin } from "@/modules/admin/context/AdminContext";
 import {
@@ -52,6 +53,16 @@ const CATEGORIES = [
 
 const CURRENCIES = ["USD", "INR", "EUR", "GBP", "AED"];
 
+const STATUS_COLORS: Record<
+  string,
+  { bg: string; border: string; text: string }
+> = {
+  draft: { bg: "#F59E0B1A", border: "#F59E0B40", text: "#F59E0B" },
+  sent: { bg: "#3B82F61A", border: "#3B82F640", text: "#3B82F6" },
+  accepted: { bg: "#10B9811A", border: "#10B98140", text: "#10B981" },
+  rejected: { bg: "#EF44441A", border: "#EF444440", text: "#EF4444" },
+};
+
 function formatMoney(amount: number, currency: string): string {
   return amount.toLocaleString("en-US", {
     style: "currency",
@@ -84,11 +95,14 @@ export default function QuotationBuilderPage({
     }));
   });
   const [paymentTerms, setPaymentTerms] = useState(
-    submission?.quotation?.paymentTerms ?? "40% advance, 30% on MVP, 30% on delivery"
+    submission?.quotation?.paymentTerms ??
+      "40% advance, 30% on MVP, 30% on delivery"
   );
   const [taxRate, setTaxRate] = useState(submission?.quotation?.taxRate ?? 0);
   const [discount, setDiscount] = useState(submission?.quotation?.discount ?? 0);
-  const [currency, setCurrency] = useState(submission?.quotation?.currency ?? "USD");
+  const [currency, setCurrency] = useState(
+    submission?.quotation?.currency ?? "USD"
+  );
   const [validUntil, setValidUntil] = useState(
     submission?.quotation?.validUntil ??
       new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
@@ -124,6 +138,7 @@ export default function QuotationBuilderPage({
           unitPrice: 0,
         }))
       );
+      setStatus("draft");
     }
   }
 
@@ -131,11 +146,14 @@ export default function QuotationBuilderPage({
     return (
       <PageTransition>
         <EmptyState
+          icon={<Calculator className="h-6 w-6" />}
           title="Submission not found"
+          description="This submission may have been removed."
           action={
-            <Link href="/admin" className="inline-flex items-center gap-1.5 rounded-xl bg-cyan text-ink font-medium text-[13px] px-4 py-2.5">
-              <ArrowLeft className="h-4 w-4" />
-              Back to dashboard
+            <Link href="/admin/quotations">
+              <AdminButton variant="primary" size="sm" icon={<ArrowLeft className="h-3.5 w-3.5" />}>
+                Back to quotations
+              </AdminButton>
             </Link>
           }
         />
@@ -166,7 +184,10 @@ export default function QuotationBuilderPage({
     setItems((prev) => prev.filter((it) => it.id !== itemId));
   }
 
-  const subtotal = items.reduce((sum, it) => sum + it.qty * it.unitPrice, 0);
+  const subtotal = items.reduce(
+    (sum, it) => sum + it.qty * it.unitPrice,
+    0
+  );
   const discountAmount = (subtotal * discount) / 100;
   const taxableAmount = subtotal - discountAmount;
   const taxAmount = (taxableAmount * taxRate) / 100;
@@ -192,46 +213,78 @@ export default function QuotationBuilderPage({
     setSavedAt(Date.now());
   }
 
+  function handleDownload() {
+    setShowPreview(true);
+    setTimeout(() => window.print(), 400);
+  }
+
+  const statusColors = STATUS_COLORS[status];
+
   return (
     <PageTransition>
       <Link
         href={`/admin/submissions/${submission.id}`}
-        className="inline-flex items-center gap-1.5 text-[12.5px] text-white/55 hover:text-white transition-colors mb-4"
+        className="inline-flex items-center gap-1.5 text-[12.5px] mb-4 transition-opacity hover:opacity-80"
+        style={{ color: "var(--admin-text-secondary)" }}
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         Back to submission
       </Link>
 
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan/25 bg-cyan/[0.06] px-3 py-1 text-[10.5px] font-medium uppercase tracking-[0.18em] text-cyan-soft">
+          <div className="flex items-center gap-2 mb-2">
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10.5px] font-medium uppercase tracking-[0.18em]"
+              style={{
+                background: "var(--admin-surface-2)",
+                borderColor: "var(--admin-border)",
+                color: "var(--admin-accent)",
+              }}
+            >
               <Calculator className="h-3 w-3" />
               Quotation Builder
             </span>
-            <span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10.5px] font-medium uppercase tracking-wider ${
-              status === "draft"
-                ? "bg-amber-400/10 text-amber-200 border-amber-400/25"
-                : status === "sent"
-                ? "bg-blue-400/10 text-blue-200 border-blue-400/25"
-                : status === "accepted"
-                ? "bg-emerald-400/10 text-emerald-200 border-emerald-400/25"
-                : "bg-rose-400/10 text-rose-200 border-rose-400/25"
-            }`}>
+            <span
+              className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10.5px] font-medium uppercase tracking-wider"
+              style={{
+                background: statusColors.bg,
+                borderColor: statusColors.border,
+                color: statusColors.text,
+              }}
+            >
               {status}
             </span>
           </div>
-          <h1 className="mt-3 font-display text-2xl font-semibold text-white tracking-tight">
+          <h1
+            className="font-bold text-2xl sm:text-3xl tracking-tight"
+            style={{ color: "var(--admin-text)" }}
+          >
             {submission.projectName}
           </h1>
-          <p className="mt-1.5 text-[13px] text-white/55">
+          <p
+            className="mt-1.5 text-[13px]"
+            style={{ color: "var(--admin-text-secondary)" }}
+          >
             Total:{" "}
-            <span className="text-white font-medium">
+            <span
+              className="font-semibold"
+              style={{ color: "var(--admin-text)" }}
+            >
               {formatMoney(total, currency)}
             </span>
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap print:hidden">
+          <AdminButton
+            variant="ghost"
+            size="sm"
+            onClick={handleDownload}
+            icon={<Download className="h-3.5 w-3.5" />}
+          >
+            PDF
+          </AdminButton>
           <AdminButton
             variant="ghost"
             size="sm"
@@ -266,7 +319,10 @@ export default function QuotationBuilderPage({
             <SectionTitle title="Line Items" />
             <div className="space-y-2">
               {/* Header */}
-              <div className="hidden sm:grid grid-cols-[1.5fr_2fr_60px_100px_100px_40px] gap-2 px-1 pb-2 text-[10.5px] uppercase tracking-wider text-white/40">
+              <div
+                className="hidden sm:grid grid-cols-[1.5fr_2fr_60px_100px_100px_40px] gap-2 px-1 pb-2 text-[10.5px] uppercase tracking-wider font-medium"
+                style={{ color: "var(--admin-text-muted)" }}
+              >
                 <span>Category</span>
                 <span>Description</span>
                 <span className="text-center">Qty</span>
@@ -282,7 +338,8 @@ export default function QuotationBuilderPage({
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
-                    className="grid grid-cols-1 sm:grid-cols-[1.5fr_2fr_60px_100px_100px_40px] gap-2 items-center bg-white/[0.02] rounded-lg p-2"
+                    className="grid grid-cols-1 sm:grid-cols-[1.5fr_2fr_60px_100px_100px_40px] gap-2 items-center rounded-lg p-2"
+                    style={{ background: "var(--admin-surface-2)" }}
                   >
                     <AdminSelect
                       value={item.category}
@@ -305,7 +362,9 @@ export default function QuotationBuilderPage({
                       min={1}
                       value={item.qty}
                       onChange={(e) =>
-                        updateItem(item.id, { qty: Math.max(1, Number(e.target.value) || 1) })
+                        updateItem(item.id, {
+                          qty: Math.max(1, Number(e.target.value) || 1),
+                        })
                       }
                       className="text-[12px] py-1.5 text-center"
                     />
@@ -314,17 +373,23 @@ export default function QuotationBuilderPage({
                       min={0}
                       value={item.unitPrice}
                       onChange={(e) =>
-                        updateItem(item.id, { unitPrice: Number(e.target.value) || 0 })
+                        updateItem(item.id, {
+                          unitPrice: Number(e.target.value) || 0,
+                        })
                       }
                       className="text-[12px] py-1.5 text-right"
                     />
-                    <span className="text-[12.5px] text-white text-right font-medium tabular-nums">
+                    <span
+                      className="text-[12.5px] text-right font-medium tabular-nums"
+                      style={{ color: "var(--admin-text)" }}
+                    >
                       {formatMoney(item.qty * item.unitPrice, currency)}
                     </span>
                     <button
                       onClick={() => removeItem(item.id)}
                       aria-label="Remove item"
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-white/40 hover:text-rose-300 hover:bg-rose-400/10 transition-all"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-md transition-all hover:opacity-80"
+                      style={{ color: "var(--admin-text-muted)" }}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -333,7 +398,11 @@ export default function QuotationBuilderPage({
               </AnimatePresence>
               <button
                 onClick={addItem}
-                className="w-full rounded-lg border border-dashed border-white/15 py-3 text-[12.5px] text-white/55 hover:border-cyan/40 hover:bg-cyan/[0.04] hover:text-cyan-soft transition-all inline-flex items-center justify-center gap-1.5"
+                className="w-full rounded-lg border border-dashed py-3 text-[12.5px] transition-all inline-flex items-center justify-center gap-1.5 hover:opacity-90"
+                style={{
+                  borderColor: "var(--admin-border)",
+                  color: "var(--admin-text-secondary)",
+                }}
               >
                 <Plus className="h-3.5 w-3.5" />
                 Add Line Item
@@ -341,7 +410,7 @@ export default function QuotationBuilderPage({
             </div>
           </AdminCard>
 
-          {/* Sidebar: terms + summary */}
+          {/* Sidebar */}
           <div className="space-y-4">
             <AdminCard className="p-5">
               <SectionTitle title="Payment Terms" />
@@ -357,7 +426,10 @@ export default function QuotationBuilderPage({
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] text-white/50 mb-1">
+                    <label
+                      className="block text-[11px] mb-1"
+                      style={{ color: "var(--admin-text-muted)" }}
+                    >
                       Currency
                     </label>
                     <AdminSelect
@@ -368,7 +440,10 @@ export default function QuotationBuilderPage({
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-white/50 mb-1">
+                    <label
+                      className="block text-[11px] mb-1"
+                      style={{ color: "var(--admin-text-muted)" }}
+                    >
                       Valid Until
                     </label>
                     <AdminInput
@@ -379,7 +454,10 @@ export default function QuotationBuilderPage({
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-white/50 mb-1">
+                    <label
+                      className="block text-[11px] mb-1"
+                      style={{ color: "var(--admin-text-muted)" }}
+                    >
                       Discount (%)
                     </label>
                     <AdminInput
@@ -387,12 +465,19 @@ export default function QuotationBuilderPage({
                       min={0}
                       max={100}
                       value={discount}
-                      onChange={(e) => setDiscount(Math.max(0, Math.min(100, Number(e.target.value) || 0)))}
+                      onChange={(e) =>
+                        setDiscount(
+                          Math.max(0, Math.min(100, Number(e.target.value) || 0))
+                        )
+                      }
                       className="text-[12px] py-1.5"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-white/50 mb-1">
+                    <label
+                      className="block text-[11px] mb-1"
+                      style={{ color: "var(--admin-text-muted)" }}
+                    >
                       Tax Rate (%)
                     </label>
                     <AdminInput
@@ -400,40 +485,71 @@ export default function QuotationBuilderPage({
                       min={0}
                       max={100}
                       value={taxRate}
-                      onChange={(e) => setTaxRate(Math.max(0, Math.min(100, Number(e.target.value) || 0)))}
+                      onChange={(e) =>
+                        setTaxRate(
+                          Math.max(0, Math.min(100, Number(e.target.value) || 0))
+                        )
+                      }
                       className="text-[12px] py-1.5"
                     />
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-white/8 space-y-1.5">
+                <div
+                  className="pt-3 border-t space-y-1.5"
+                  style={{ borderColor: "var(--admin-border)" }}
+                >
                   <div className="flex justify-between text-[12px]">
-                    <span className="text-white/55">Subtotal</span>
-                    <span className="text-white tabular-nums">
+                    <span style={{ color: "var(--admin-text-secondary)" }}>
+                      Subtotal
+                    </span>
+                    <span
+                      className="tabular-nums"
+                      style={{ color: "var(--admin-text)" }}
+                    >
                       {formatMoney(subtotal, currency)}
                     </span>
                   </div>
                   {discount > 0 && (
                     <div className="flex justify-between text-[12px]">
-                      <span className="text-white/55">Discount ({discount}%)</span>
-                      <span className="text-emerald-300 tabular-nums">
+                      <span style={{ color: "var(--admin-text-secondary)" }}>
+                        Discount ({discount}%)
+                      </span>
+                      <span
+                        className="tabular-nums"
+                        style={{ color: "#10B981" }}
+                      >
                         −{formatMoney(discountAmount, currency)}
                       </span>
                     </div>
                   )}
                   {taxRate > 0 && (
                     <div className="flex justify-between text-[12px]">
-                      <span className="text-white/55">Tax ({taxRate}%)</span>
-                      <span className="text-amber-200 tabular-nums">
+                      <span style={{ color: "var(--admin-text-secondary)" }}>
+                        Tax ({taxRate}%)
+                      </span>
+                      <span
+                        className="tabular-nums"
+                        style={{ color: "#F59E0B" }}
+                      >
                         +{formatMoney(taxAmount, currency)}
                       </span>
                     </div>
                   )}
-                  <div className="flex justify-between pt-2 border-t border-white/8">
-                    <span className="font-display text-[14px] font-semibold text-white">
+                  <div
+                    className="flex justify-between pt-2 border-t"
+                    style={{ borderColor: "var(--admin-border)" }}
+                  >
+                    <span
+                      className="font-semibold text-[14px]"
+                      style={{ color: "var(--admin-text)" }}
+                    >
                       Total
                     </span>
-                    <span className="font-display text-[16px] font-bold text-cyan tabular-nums">
+                    <span
+                      className="font-bold text-[16px] tabular-nums"
+                      style={{ color: "var(--admin-accent)" }}
+                    >
                       {formatMoney(total, currency)}
                     </span>
                   </div>
@@ -453,28 +569,56 @@ export default function QuotationBuilderPage({
           </div>
         </div>
       ) : (
-        <AdminCard strong className="p-8 sm:p-12 max-w-3xl mx-auto">
+        <AdminCard
+          strong
+          className="p-8 sm:p-12 max-w-3xl mx-auto print:border-none print:shadow-none"
+        >
           {/* Invoice-style preview */}
-          <div className="flex items-start justify-between mb-8 pb-6 border-b border-white/10">
+          <div
+            className="flex items-start justify-between mb-8 pb-6 border-b"
+            style={{ borderColor: "var(--admin-border)" }}
+          >
             <div>
-              <p className="font-display text-[12px] uppercase tracking-[0.22em] text-cyan-soft/70">
+              <p
+                className="font-semibold text-[12px] uppercase tracking-[0.22em]"
+                style={{ color: "var(--admin-accent)" }}
+              >
                 MB Tech Labs
               </p>
-              <h1 className="mt-2 font-display text-2xl font-semibold text-white">
+              <h1
+                className="mt-2 font-bold text-2xl"
+                style={{ color: "var(--admin-text)" }}
+              >
                 Quotation
               </h1>
             </div>
             <div className="text-right">
-              <p className="text-[11px] text-white/40">Date</p>
-              <p className="text-[13px] text-white">
+              <p
+                className="text-[11px]"
+                style={{ color: "var(--admin-text-muted)" }}
+              >
+                Date
+              </p>
+              <p
+                className="text-[13px]"
+                style={{ color: "var(--admin-text)" }}
+              >
                 {new Date().toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
                   year: "numeric",
                 })}
               </p>
-              <p className="text-[11px] text-white/40 mt-2">Valid Until</p>
-              <p className="text-[13px] text-white">
+              <p
+                className="text-[11px] mt-2"
+                style={{ color: "var(--admin-text-muted)" }}
+              >
+                Valid Until
+              </p>
+              <p
+                className="text-[13px]"
+                style={{ color: "var(--admin-text)" }}
+              >
                 {new Date(validUntil).toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
@@ -485,19 +629,43 @@ export default function QuotationBuilderPage({
           </div>
 
           <div className="mb-6">
-            <p className="text-[11px] text-white/40">Prepared for</p>
-            <p className="text-[14px] font-medium text-white mt-0.5">
+            <p
+              className="text-[11px]"
+              style={{ color: "var(--admin-text-muted)" }}
+            >
+              Prepared for
+            </p>
+            <p
+              className="text-[14px] font-medium mt-0.5"
+              style={{ color: "var(--admin-text)" }}
+            >
               {submission.client.fullName}
             </p>
-            <p className="text-[12.5px] text-white/60">
+            <p
+              className="text-[12.5px]"
+              style={{ color: "var(--admin-text-secondary)" }}
+            >
               {submission.client.company}
             </p>
-            <p className="text-[12px] text-white/45">{submission.client.email}</p>
+            <p
+              className="text-[12px]"
+              style={{ color: "var(--admin-text-muted)" }}
+            >
+              {submission.client.email}
+            </p>
           </div>
 
           <div className="mb-6">
-            <p className="text-[11px] text-white/40">Project</p>
-            <p className="text-[14px] font-medium text-white mt-0.5">
+            <p
+              className="text-[11px]"
+              style={{ color: "var(--admin-text-muted)" }}
+            >
+              Project
+            </p>
+            <p
+              className="text-[14px] font-medium mt-0.5"
+              style={{ color: "var(--admin-text)" }}
+            >
               {submission.projectName}
             </p>
           </div>
@@ -505,7 +673,13 @@ export default function QuotationBuilderPage({
           {/* Items table */}
           <table className="w-full text-left mb-6">
             <thead>
-              <tr className="border-b border-white/10 text-[10.5px] uppercase tracking-wider text-white/40">
+              <tr
+                className="border-b text-[10.5px] uppercase tracking-wider"
+                style={{
+                  borderColor: "var(--admin-border)",
+                  color: "var(--admin-text-muted)",
+                }}
+              >
                 <th className="py-2 font-medium">Description</th>
                 <th className="py-2 font-medium text-center w-12">Qty</th>
                 <th className="py-2 font-medium text-right w-24">Unit Price</th>
@@ -516,21 +690,36 @@ export default function QuotationBuilderPage({
               {items.map((item) => (
                 <tr
                   key={item.id}
-                  className="border-b border-white/5 text-[12.5px]"
+                  className="border-b text-[12.5px]"
+                  style={{ borderColor: "var(--admin-border)" }}
                 >
                   <td className="py-3">
-                    <p className="text-white/85">{item.description}</p>
-                    <p className="text-[10.5px] text-cyan-soft/60 uppercase tracking-wider mt-0.5">
+                    <p style={{ color: "var(--admin-text)" }}>
+                      {item.description}
+                    </p>
+                    <p
+                      className="text-[10.5px] uppercase tracking-wider mt-0.5"
+                      style={{ color: "var(--admin-accent)" }}
+                    >
                       {item.category}
                     </p>
                   </td>
-                  <td className="py-3 text-center text-white/65 tabular-nums">
+                  <td
+                    className="py-3 text-center tabular-nums"
+                    style={{ color: "var(--admin-text-secondary)" }}
+                  >
                     {item.qty}
                   </td>
-                  <td className="py-3 text-right text-white/65 tabular-nums">
+                  <td
+                    className="py-3 text-right tabular-nums"
+                    style={{ color: "var(--admin-text-secondary)" }}
+                  >
                     {formatMoney(item.unitPrice, currency)}
                   </td>
-                  <td className="py-3 text-right text-white tabular-nums font-medium">
+                  <td
+                    className="py-3 text-right tabular-nums font-medium"
+                    style={{ color: "var(--admin-text)" }}
+                  >
                     {formatMoney(item.qty * item.unitPrice, currency)}
                   </td>
                 </tr>
@@ -541,57 +730,108 @@ export default function QuotationBuilderPage({
           {/* Totals */}
           <div className="ml-auto w-full max-w-xs space-y-1.5">
             <div className="flex justify-between text-[12.5px]">
-              <span className="text-white/55">Subtotal</span>
-              <span className="text-white tabular-nums">
+              <span style={{ color: "var(--admin-text-secondary)" }}>
+                Subtotal
+              </span>
+              <span
+                className="tabular-nums"
+                style={{ color: "var(--admin-text)" }}
+              >
                 {formatMoney(subtotal, currency)}
               </span>
             </div>
             {discount > 0 && (
               <div className="flex justify-between text-[12.5px]">
-                <span className="text-white/55">Discount ({discount}%)</span>
-                <span className="text-emerald-300 tabular-nums">
+                <span style={{ color: "var(--admin-text-secondary)" }}>
+                  Discount ({discount}%)
+                </span>
+                <span className="tabular-nums" style={{ color: "#10B981" }}>
                   −{formatMoney(discountAmount, currency)}
                 </span>
               </div>
             )}
             {taxRate > 0 && (
               <div className="flex justify-between text-[12.5px]">
-                <span className="text-white/55">Tax ({taxRate}%)</span>
-                <span className="text-amber-200 tabular-nums">
+                <span style={{ color: "var(--admin-text-secondary)" }}>
+                  Tax ({taxRate}%)
+                </span>
+                <span className="tabular-nums" style={{ color: "#F59E0B" }}>
                   +{formatMoney(taxAmount, currency)}
                 </span>
               </div>
             )}
-            <div className="flex justify-between pt-2 border-t border-white/10">
-              <span className="font-display text-[15px] font-semibold text-white">
+            <div
+              className="flex justify-between pt-2 border-t"
+              style={{ borderColor: "var(--admin-border)" }}
+            >
+              <span
+                className="font-semibold text-[15px]"
+                style={{ color: "var(--admin-text)" }}
+              >
                 Total
               </span>
-              <span className="font-display text-[17px] font-bold text-cyan tabular-nums">
+              <span
+                className="font-bold text-[17px] tabular-nums"
+                style={{ color: "var(--admin-accent)" }}
+              >
                 {formatMoney(total, currency)}
               </span>
             </div>
           </div>
 
           {/* Terms + notes */}
-          <div className="mt-8 pt-6 border-t border-white/10 space-y-4">
+          <div
+            className="mt-8 pt-6 border-t space-y-4"
+            style={{ borderColor: "var(--admin-border)" }}
+          >
             <div>
-              <p className="text-[11px] uppercase tracking-wider text-white/40 mb-1">
+              <p
+                className="text-[11px] uppercase tracking-wider mb-1 font-medium"
+                style={{ color: "var(--admin-text-muted)" }}
+              >
                 Payment Terms
               </p>
-              <p className="text-[12.5px] text-white/75 leading-relaxed">
+              <p
+                className="text-[12.5px] leading-relaxed"
+                style={{ color: "var(--admin-text-secondary)" }}
+              >
                 {paymentTerms}
               </p>
             </div>
             {notes && (
               <div>
-                <p className="text-[11px] uppercase tracking-wider text-white/40 mb-1">
+                <p
+                  className="text-[11px] uppercase tracking-wider mb-1 font-medium"
+                  style={{ color: "var(--admin-text-muted)" }}
+                >
                   Notes
                 </p>
-                <p className="text-[12.5px] text-white/75 leading-relaxed">
+                <p
+                  className="text-[12.5px] leading-relaxed"
+                  style={{ color: "var(--admin-text-secondary)" }}
+                >
                   {notes}
                 </p>
               </div>
             )}
+          </div>
+
+          <div
+            className="mt-10 pt-6 border-t flex items-center justify-between text-[11px]"
+            style={{
+              borderColor: "var(--admin-border)",
+              color: "var(--admin-text-muted)",
+            }}
+          >
+            <span>MB Tech Labs · Confidential</span>
+            <span>
+              Generated{" "}
+              {new Date().toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </span>
           </div>
         </AdminCard>
       )}
@@ -600,12 +840,24 @@ export default function QuotationBuilderPage({
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="mt-4 text-[11.5px] text-cyan-soft/70 flex items-center gap-1.5"
+          className="mt-4 text-[11.5px] flex items-center gap-1.5 print:hidden"
+          style={{ color: "var(--admin-accent)" }}
         >
           <Check className="h-3 w-3" />
           Saved {new Date(savedAt).toLocaleTimeString()}
         </motion.p>
       )}
+
+      <div className="print:hidden mt-4">
+        <AdminButton
+          variant="outline"
+          size="sm"
+          onClick={handleDownload}
+          icon={<Printer className="h-3.5 w-3.5" />}
+        >
+          Print / Save as PDF
+        </AdminButton>
+      </div>
     </PageTransition>
   );
 }

@@ -1,0 +1,1539 @@
+     1→/**
+     2→ * Seed Data + SRG Bridge
+     3→ * ----------------------
+     4→ * 1. On first admin visit, seeds localStorage with realistic sample
+     5→ *    submissions so the dashboard isn't empty.
+     6→ * 2. Bridges the SRG system: when a client submits at /start-project,
+     7→ *    the SRG payload is converted into an AdminSubmission and stored
+     8→ *    in mbtl_submissions.
+     9→ */
+    10→import type {
+    11→  AdminSubmission,
+    12→  AdminNotification,
+    13→  SrgStatus,
+    14→  Priority,
+    15→  DevProject,
+    16→  Invoice,
+    17→  Meeting,
+    18→  Client,
+    19→  ActivityLog,
+    20→} from "../types";
+    21→import {
+    22→  loadSubmissions,
+    23→  saveSubmissions,
+    24→  upsertSubmission,
+    25→  addNotification,
+    26→  generateId,
+    27→  saveProjects,
+    28→  saveInvoices,
+    29→  saveMeetings,
+    30→  saveClients,
+    31→  saveActivities,
+    32→} from "./storage";
+    33→import { getTemplate } from "../../srg/templates";
+    34→import type { SrgSubmissionPayload } from "../../srg/types";
+    35→
+    36→const SEED_FLAG = "mbtl_seeded_v3";
+    37→
+    38→/* --------------------------- Seed data --------------------------- */
+    39→
+    40→function daysAgo(n: number): number {
+    41→  return Date.now() - n * 24 * 60 * 60 * 1000;
+    42→}
+    43→
+    44→function hoursAgo(n: number): number {
+    45→  return Date.now() - n * 60 * 60 * 1000;
+    46→}
+    47→
+    48→const SEED_SUBMISSIONS: AdminSubmission[] = [
+    49→  {
+    50→    id: "sub_seed_helios_erp",
+    51→    sessionId: "srg_seed_helios_erp",
+    52→    submittedAt: daysAgo(2),
+    53→    updatedAt: hoursAgo(6),
+    54→    templateId: "erp",
+    55→    templateName: "ERP System",
+    56→    projectType: "ERP System",
+    57→    projectName: "Helios ERP Modernization",
+    58→    client: {
+    59→      fullName: "Rajiv Menon",
+    60→      email: "rajiv.menon@helioslogistics.com",
+    61→      phone: "+91 98765 43210",
+    62→      company: "Helios Logistics Pvt Ltd",
+    63→      jobTitle: "Chief Technology Officer",
+    64→      country: "India",
+    65→      timezone: "Asia/Kolkata (IST, UTC+5:30)",
+    66→      preferredContact: "email",
+    67→    },
+    68→    business: {
+    69→      legalName: "Helios Logistics Pvt Ltd",
+    70→      industry: "Logistics / Supply Chain",
+    71→      size: "201-1000",
+    72→      website: "https://helioslogistics.com",
+    73→      stage: "enterprise",
+    74→      annualBudget: "50k_150k",
+    75→      targetLaunch: "3_6_months",
+    76→      existingStack:
+    77→        "Tally for accounting, custom PHP for portal, Salesforce CRM, Excel for ops",
+    78→      competitors: "BlackBuck, Rivigo, FarEye",
+    79→      mission: "Digitize end-to-end logistics operations across 14 branches",
+    80→      vision: "Become India's most reliable tech-enabled logistics network",
+    81→      targetAudience: "B2B shippers, fleet owners, warehouse operators",
+    82→      description:
+    83→        "Replace 14 legacy systems with a unified ERP covering finance, inventory, HR, and operations.",
+    84→    },
+    85→    goals: {
+    86→      primaryGoal:
+    87→        "Replace 5+ legacy systems with one unified ERP within 6 months",
+    88→      secondaryGoals: [
+    89→        "Real-time inventory visibility across warehouses",
+    90→        "Automate 80% of purchase order workflows",
+    91→        "Reduce month-end close from 10 days to 3",
+    92→      ],
+    93→      successMetrics:
+    94→        "Month-end close in 3 days, 80% PO automation, real-time inventory",
+    95→      priorities: {
+    96→        speed: 4,
+    97→        cost: 3,
+    98→        quality: 5,
+    99→        scalability: 5,
+   100→        innovation: 3,
+   101→      },
+   102→      deadline: "3_6_months",
+   103→      budgetRange: "50k_150k",
+   104→    },
+   105→    answers: {
+   106→      modules_needed: ["finance", "inventory", "procurement", "sales", "hr"],
+   107→      user_count: 250,
+   108→      warehouse_count: 14,
+   109→      entities_count: 3,
+   110→      multi_currency: true,
+   111→      multi_company: true,
+   112→      existing_systems: ["tally", "crm", "legacy"],
+   113→      data_migration: "partial",
+   114→      compliance_required: ["gst", "tds", "iso27001"],
+   115→      audit_trail: true,
+   116→      rbac_complexity: "hierarchical",
+   117→      hosting_preference: "cloud",
+   118→      reporting_needs: ["financial", "custom_dash", "scheduled"],
+   119→    },
+   120→    uploads: [
+   121→      {
+   122→        id: "up_seed_1",
+   123→        name: "Helios_Process_Flow.pdf",
+   124→        size: 2_400_000,
+   125→        type: "application/pdf",
+   126→        category: "Documents",
+   127→        status: "ready",
+   128→        uploadedAt: daysAgo(2),
+   129→        pageCount: 24,
+   130→      },
+   131→      {
+   132→        id: "up_seed_2",
+   133→        name: "chart_of_accounts.xlsx",
+   134→        size: 180_000,
+   135→        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+   136→        category: "Data",
+   137→        status: "ready",
+   138→        uploadedAt: daysAgo(2),
+   139→      },
+   140→      {
+   141→        id: "up_seed_3",
+   142→        name: "helios_logo.png",
+   143→        size: 240_000,
+   144→        type: "image/png",
+   145→        category: "Brand Assets",
+   146→        status: "ready",
+   147→        uploadedAt: daysAgo(2),
+   148→        width: 512,
+   149→        height: 512,
+   150→      },
+   151→    ],
+   152→    teamRequirements: {
+   153→      staffCount: 250,
+   154→      roles: ["Finance Head", "Inventory Manager", "HR Manager", "IT Admin"],
+   155→      permissions: ["View", "Edit", "Approve", "Admin"],
+   156→      approvalHierarchy: ["Manager", "Department Head", "CFO", "CEO"],
+   157→    },
+   158→    workflow: {
+   159→      approval: {
+   160→        type: "approval",
+   161→        label: "Procurement Approval",
+   162→        enabled: true,
+   163→        stages: [
+   164→          { id: "s1", name: "PR Raised", description: "", owner: "Requester", slaHours: 4 },
+   165→          { id: "s2", name: "Manager Approve", description: "", owner: "Dept Manager", slaHours: 24 },
+   166→          { id: "s3", name: "Finance Approve", description: "", owner: "CFO", slaHours: 48 },
+   167→          { id: "s4", name: "PO Issue", description: "", owner: "Procurement", slaHours: 8 },
+   168→        ],
+   169→      },
+   170→      payment: {
+   171→        type: "payment",
+   172→        label: "Payment Run",
+   173→        enabled: true,
+   174→        stages: [
+   175→          { id: "s1", name: "Vendor Selection", description: "", owner: "Procurement", slaHours: 24 },
+   176→          { id: "s2", name: "Approval", description: "", owner: "CFO", slaHours: 48 },
+   177→          { id: "s3", name: "Payment Release", description: "", owner: "Finance", slaHours: 8 },
+   178→        ],
+   179→      },
+   180→      customer: {
+   181→        type: "customer",
+   182→        label: "Sales Order Flow",
+   183→        enabled: true,
+   184→        stages: [
+   185→          { id: "s1", name: "Quote", description: "", owner: "Sales", slaHours: 24 },
+   186→          { id: "s2", name: "Order", description: "", owner: "Sales", slaHours: 4 },
+   187→          { id: "s3", name: "Ship", description: "", owner: "Warehouse", slaHours: 48 },
+   188→        ],
+   189→      },
+   190→    },
+   191→    status: "Reviewing",
+   192→    priority: "High",
+   193→    assignedTeam: {
+   194→      "Project Manager": "tm_1",
+   195→      "Backend Developer": "tm_3",
+   196→      "Business Analyst": "tm_7",
+   197→    },
+   198→    proposal: null,
+   199→    quotation: null,
+   200→    notes: "Client is migrating from Tally + custom PHP. High urgency — 6 month deadline.",
+   201→    timeline: [
+   202→      { status: "New", timestamp: daysAgo(2) },
+   203→      { status: "Reviewing", timestamp: hoursAgo(6) },
+   204→    ],
+   205→  },
+   206→  {
+   207→    id: "sub_seed_atlas_saaS",
+   208→    sessionId: "srg_seed_atlas_saaS",
+   209→    submittedAt: daysAgo(5),
+   210→    updatedAt: daysAgo(4),
+   211→    templateId: "crm",
+   212→    templateName: "CRM Platform",
+   213→    projectType: "CRM Platform",
+   214→    projectName: "Atlas Analytics SaaS",
+   215→    client: {
+   216→      fullName: "Sarah Chen",
+   217→      email: "sarah.chen@atlasanalytics.io",
+   218→      phone: "+1 415 555 0182",
+   219→      company: "Atlas Analytics Inc",
+   220→      jobTitle: "VP Engineering",
+   221→      country: "United States",
+   222→      timezone: "America/Los_Angeles (PST, UTC-8)",
+   223→      preferredContact: "video",
+   224→    },
+   225→    business: {
+   226→      legalName: "Atlas Analytics Inc",
+   227→      industry: "Technology / SaaS",
+   228→      size: "11-50",
+   229→      website: "https://atlasanalytics.io",
+   230→      stage: "growth",
+   231→      annualBudget: "50k_150k",
+   232→      targetLaunch: "3_6_months",
+   233→      existingStack: "React, Node.js, Postgres, Mixpanel, HubSpot, Salesforce",
+   234→      competitors: "Amplitude, Heap, Pendo",
+   235→      mission: "Make product analytics accessible to every team",
+   236→      vision: "The analytics layer of every modern SaaS product",
+   237→      targetAudience: "Product managers and growth teams at B2B SaaS companies",
+   238→      description:
+   239→        "A product analytics SaaS processing 2B+ events daily with AI-generated insight summaries.",
+   240→    },
+   241→    goals: {
+   242→      primaryGoal: "Launch analytics SaaS with 90% forecast accuracy",
+   243→      secondaryGoals: [
+   244→        "Process 2B+ events daily",
+   245→        "Sub-second query latency",
+   246→        "AI-generated insight summaries",
+   247→      ],
+   248→      successMetrics: "2B events/day, p99 < 1s, 50 paying customers in 6 months",
+   249→      priorities: { speed: 5, cost: 2, quality: 5, scalability: 5, innovation: 4 },
+   250→      deadline: "3_6_months",
+   251→      budgetRange: "50k_150k",
+   252→    },
+   253→    answers: {
+   254→      sales_model: "b2b_smb",
+   255→      modules_needed: ["leads", "deals", "contacts", "email", "forecast", "c360"],
+   256→      sales_reps_count: 12,
+   257→      monthly_leads: 800,
+   258→      pipeline_stages: "New → Contacted → Qualified → Demo → Proposal → Won",
+   259→      lead_sources: ["web_form", "ads", "linkedin", "referrals"],
+   260→      lead_scoring: true,
+   261→      assignment_rules: true,
+   262→      ai_features: ["lead_scoring", "deal_predict", "summary", "forecast"],
+   263→    },
+   264→    uploads: [
+   265→      {
+   266→        id: "up_seed_4",
+   267→        name: "Atlas_Sales_Process.pdf",
+   268→        size: 1_200_000,
+   269→        type: "application/pdf",
+   270→        category: "Documents",
+   271→        status: "ready",
+   272→        uploadedAt: daysAgo(5),
+   273→      },
+   274→      {
+   275→        id: "up_seed_5",
+   276→        name: "atlas_brand_assets.zip",
+   277→        size: 8_400_000,
+   278→        type: "application/zip",
+   279→        category: "Brand Assets",
+   280→        status: "ready",
+   281→        uploadedAt: daysAgo(5),
+   282→      },
+   283→    ],
+   284→    teamRequirements: {
+   285→      staffCount: 12,
+   286→      roles: ["Sales Rep", "Sales Manager", "Marketing Lead"],
+   287→      permissions: ["View", "Edit", "Approve"],
+   288→      approvalHierarchy: ["Sales Manager", "VP Sales", "CEO"],
+   289→    },
+   290→    workflow: {
+   291→      customer: {
+   292→        type: "customer",
+   293→        label: "Lead to Customer",
+   294→        enabled: true,
+   295→        stages: [
+   296→          { id: "s1", name: "Lead Capture", description: "", owner: "Marketing", slaHours: 1 },
+   297→          { id: "s2", name: "Auto-assign", description: "", owner: "System", slaHours: 0 },
+   298→          { id: "s3", name: "Qualification", description: "", owner: "Sales Rep", slaHours: 24 },
+   299→          { id: "s4", name: "Demo", description: "", owner: "Sales Rep", slaHours: 72 },
+   300→          { id: "s5", name: "Proposal", description: "", owner: "Sales Manager", slaHours: 48 },
+   301→          { id: "s6", name: "Won", description: "", owner: "Sales Rep", slaHours: 0 },
+   302→        ],
+   303→      },
+   304→    },
+   305→    status: "Proposal Ready",
+   306→    priority: "High",
+   307→    assignedTeam: {
+   308→      "Project Manager": "tm_1",
+   309→      "Frontend Developer": "tm_2",
+   310→      "Backend Developer": "tm_3",
+   311→      "UI Designer": "tm_4",
+   312→    },
+   313→    proposal: {
+   314→      id: "prop_seed_1",
+   315→      createdAt: daysAgo(3),
+   316→      updatedAt: daysAgo(3),
+   317→      status: "draft",
+   318→      sections: [
+   319→        { id: "scope", title: "Project Scope", content: "Build a multi-tenant SaaS analytics platform with real-time event ingestion, sub-second queries, and AI-generated insights." },
+   320→        { id: "modules", title: "Modules", content: "Lead Management, Deal Pipeline, Contact DB, Email Integration, Forecasting, Customer 360" },
+   321→        { id: "timeline", title: "Timeline", content: "16 weeks: 4 weeks architecture, 8 weeks MVP, 4 weeks hardening" },
+   322→      ],
+   323→    },
+   324→    quotation: null,
+   325→    notes: "US-based client, prefers video calls. Strong technical team — will co-build.",
+   326→    timeline: [
+   327→      { status: "New", timestamp: daysAgo(5) },
+   328→      { status: "Reviewing", timestamp: daysAgo(4) },
+   329→      { status: "Proposal Ready", timestamp: daysAgo(3) },
+   330→    ],
+   331→  },
+   332→  {
+   333→    id: "sub_seed_nova_legal",
+   334→    sessionId: "srg_seed_nova_legal",
+   335→    submittedAt: daysAgo(1),
+   336→    updatedAt: daysAgo(1),
+   337→    templateId: "custom",
+   338→    templateName: "Custom Software",
+   339→    projectType: "Custom Software",
+   340→    projectName: "Nova AI Legal Assistant",
+   341→    client: {
+   342→      fullName: "David Okonkwo",
+   343→      email: "david@novalegal.com",
+   344→      phone: "+44 20 7946 0958",
+   345→      company: "Nova Legal Partners",
+   346→      jobTitle: "Managing Partner",
+   347→      country: "United Kingdom",
+   348→      timezone: "Europe/London (GMT, UTC+0)",
+   349→      preferredContact: "email",
+   350→    },
+   351→    business: {
+   352→      legalName: "Nova Legal Partners LLP",
+   353→      industry: "Legal / Professional Services",
+   354→      size: "11-50",
+   355→      website: "https://novalegal.com",
+   356→      stage: "enterprise",
+   357→      annualBudget: "50k_150k",
+   358→      targetLaunch: "3_6_months",
+   359→      existingStack: "Microsoft 365, Clio, custom SharePoint",
+   360→      competitors: "LexisNexis, Thomson Reuters",
+   361→      mission: "Make legal research 10x faster with AI",
+   362→      vision: "Every lawyer with an AI co-pilot",
+   363→      targetAudience: "Mid-size law firms and in-house legal teams",
+   364→      description:
+   365→        "A retrieval-augmented assistant for a legal firm — ingests 50k+ case documents, cites sources, ships answers with verifiable provenance.",
+   366→    },
+   367→    goals: {
+   368→      primaryGoal: "Launch RAG assistant trusted by lawyers within 4 months",
+   369→      secondaryGoals: [
+   370→        "Ingest 50k+ case documents",
+   371→        "Cite sources on every answer",
+   372→        "Verifiable provenance",
+   373→      ],
+   374→      successMetrics: "90% lawyer satisfaction, 50% faster research, 100% cited answers",
+   375→      priorities: { speed: 3, cost: 2, quality: 5, scalability: 4, innovation: 5 },
+   376→      deadline: "3_6_months",
+   377→      budgetRange: "50k_150k",
+   378→    },
+   379→    answers: {
+   380→      product_summary: "RAG-based legal research assistant with source citations",
+   381→      problem_solved: "Legal research is slow, expensive, and hard to verify",
+   382→      target_audience: "Mid-size law firms",
+   383→      core_features: "Document ingestion, semantic search, cited answers, audit trail",
+   384→      user_roles: ["admin", "lawyer", "paralegal", "guest"],
+   385→      platforms: ["web", "api"],
+   386→      third_party_integrations: ["ai", "storage", "auth"],
+   387→      compliance: ["gdpr", "iso27001"],
+   388→      expected_users: 200,
+   389→      expected_growth: "moderate",
+   390→    },
+   391→    uploads: [
+   392→      {
+   393→        id: "up_seed_6",
+   394→        name: "Nova_PRD.pdf",
+   395→        size: 3_100_000,
+   396→        type: "application/pdf",
+   397→        category: "Documents",
+   398→        status: "ready",
+   399→        uploadedAt: daysAgo(1),
+   400→        pageCount: 32,
+   401→      },
+   402→      {
+   403→        id: "up_seed_7",
+   404→        name: "nova_wireframes.zip",
+   405→        size: 12_000_000,
+   406→        type: "application/zip",
+   407→        category: "Wireframes",
+   408→        status: "ready",
+   409→        uploadedAt: daysAgo(1),
+   410→      },
+   411→    ],
+   412→    teamRequirements: {
+   413→      staffCount: 50,
+   414→      roles: ["Lawyer", "Paralegal", "IT Admin", "Managing Partner"],
+   415→      permissions: ["View", "Edit", "Admin"],
+   416→      approvalHierarchy: ["Managing Partner", "IT Admin"],
+   417→    },
+   418→    workflow: {
+   419→      approval: {
+   420→        type: "approval",
+   421→        label: "Content Approval",
+   422→        enabled: true,
+   423→        stages: [
+   424→          { id: "s1", name: "Submit", description: "", owner: "Lawyer", slaHours: 0 },
+   425→          { id: "s2", name: "Review", description: "", owner: "Senior Partner", slaHours: 24 },
+   426→          { id: "s3", name: "Approve/Reject", description: "", owner: "Managing Partner", slaHours: 48 },
+   427→        ],
+   428→      },
+   429→    },
+   430→    status: "New",
+   431→    priority: "Critical",
+   432→    assignedTeam: {},
+   433→    proposal: null,
+   434→    quotation: null,
+   435→    notes: "Hot lead — came via referral. Needs quick response.",
+   436→    timeline: [{ status: "New", timestamp: daysAgo(1) }],
+   437→  },
+   438→  {
+   439→    id: "sub_seed_zahra_trust",
+   440→    sessionId: "srg_seed_zahra_trust",
+   441→    submittedAt: daysAgo(8),
+   442→    updatedAt: daysAgo(3),
+   443→    templateId: "trust",
+   444→    templateName: "Trust / Foundation",
+   445→    projectType: "Trust / Foundation",
+   446→    projectName: "Zahra Foundation Portal",
+   447→    client: {
+   448→      fullName: "Zahra Al-Rashid",
+   449→      email: "zahra@zahrafoundation.org",
+   450→      phone: "+971 50 123 4567",
+   451→      company: "Zahra Foundation",
+   452→      jobTitle: "Director",
+   453→      country: "United Arab Emirates",
+   454→      timezone: "Asia/Dubai (GST, UTC+4)",
+   455→      preferredContact: "email",
+   456→    },
+   457→    business: {
+   458→      legalName: "Zahra Foundation",
+   459→      industry: "Non-profit / NGO",
+   460→      size: "11-50",
+   461→      website: "https://zahrafoundation.org",
+   462→      stage: "nonprofit",
+   463→      annualBudget: "15k_50k",
+   464→      targetLaunch: "1_3_months",
+   465→      existingStack: "WordPress, Google Sheets, Mailchimp",
+   466→      competitors: "Islamic Relief, UNHCR",
+   467→      mission: "Provide clean water and education to 100k families",
+   468→      vision: "A world where every child has clean water and a school",
+   469→      targetAudience: "Donors in GCC region, beneficiary families",
+   470→      description:
+   471→        "Donor portal with recurring donations, tax receipts, and impact dashboards.",
+   472→    },
+   473→    goals: {
+   474→      primaryGoal: "Increase recurring donations by 40% in 6 months",
+   475→      secondaryGoals: [
+   476→        "Launch donor portal with tax receipts",
+   477→        "Public transparency dashboard",
+   478→        "Track program impact",
+   479→      ],
+   480→      successMetrics: "40% increase in recurring donations, 1000 new donors",
+   481→      priorities: { speed: 4, cost: 4, quality: 3, scalability: 3, innovation: 2 },
+   482→      deadline: "1_3_months",
+   483→      budgetRange: "15k_50k",
+   484→    },
+   485→    answers: {
+   486→      trust_type: "public_charitable",
+   487→      registration_status: "registered_12a_80g",
+   488→      donor_count: 1200,
+   489→      annual_fundraise: "1cr_10cr",
+   490→      donor_portal_needed: true,
+   491→      donor_portal_features: ["history", "tax_receipts", "recurring", "impact_reports"],
+   492→      payment_methods: ["upi", "cards", "bank_transfer", "international"],
+   493→      donor_receipts: true,
+   494→      program_count: 5,
+   495→      impact_tracking: ["beneficiaries", "fund_utilization", "geography"],
+   496→      public_dashboard: true,
+   497→    },
+   498→    uploads: [
+   499→      {
+   500→        id: "up_seed_8",
+   501→        name: "Zahra_12A_80G.pdf",
+   502→        size: 540_000,
+   503→        type: "application/pdf",
+   504→        category: "Certificates",
+   505→        status: "ready",
+   506→        uploadedAt: daysAgo(8),
+   507→      },
+   508→      {
+   509→        id: "up_seed_9",
+   510→        name: "zahra_logo.png",
+   511→        size: 180_000,
+   512→        type: "image/png",
+   513→        category: "Logo",
+   514→        status: "ready",
+   515→        uploadedAt: daysAgo(8),
+   516→        width: 400,
+   517→        height: 400,
+   518→      },
+   519→    ],
+   520→    teamRequirements: {
+   521→      staffCount: 25,
+   522→      roles: ["Director", "Program Manager", "Finance", "Field Coordinator"],
+   523→      permissions: ["View", "Edit", "Approve"],
+   524→      approvalHierarchy: ["Program Manager", "Director", "Board"],
+   525→    },
+   526→    workflow: {
+   527→      customer: {
+   528→        type: "customer",
+   529→        label: "Donor Journey",
+   530→        enabled: true,
+   531→        stages: [
+   532→          { id: "s1", name: "Discover", description: "", owner: "Marketing", slaHours: 0 },
+   533→          { id: "s2", name: "First Donation", description: "", owner: "System", slaHours: 0 },
+   534→          { id: "s3", name: "Thank You + Receipt", description: "", owner: "System", slaHours: 1 },
+   535→          { id: "s4", name: "Impact Update", description: "", owner: "Programs", slaHours: 720 },
+   536→          { id: "s5", name: "Renewal Ask", description: "", owner: "Marketing", slaHours: 1440 },
+   537→        ],
+   538→      },
+   539→      payment: {
+   540→        type: "payment",
+   541→        label: "Donation Processing",
+   542→        enabled: true,
+   543→        stages: [
+   544→          { id: "s1", name: "Initiate", description: "", owner: "Donor", slaHours: 0 },
+   545→          { id: "s2", name: "Payment Gateway", description: "", owner: "System", slaHours: 0 },
+   546→          { id: "s3", name: "Success/Failure", description: "", owner: "System", slaHours: 0 },
+   547→          { id: "s4", name: "Receipt Generate", description: "", owner: "System", slaHours: 1 },
+   548→        ],
+   549→      },
+   550→    },
+   551→    status: "Quotation Sent",
+   552→    priority: "Medium",
+   553→    assignedTeam: {
+   554→      "Project Manager": "tm_1",
+   555→      "Frontend Developer": "tm_8",
+   556→      "UI Designer": "tm_10",
+   557→    },
+   558→    proposal: {
+   559→      id: "prop_seed_2",
+   560→      createdAt: daysAgo(5),
+   561→      updatedAt: daysAgo(4),
+   562→      status: "sent",
+   563→      sections: [
+   564→        { id: "scope", title: "Project Scope", content: "Donor portal with recurring donations, 80G receipts, and public impact dashboard." },
+   565→        { id: "modules", title: "Modules", content: "Donor DB, Donation Processing, Receipts, Impact Dashboard, Broadcast" },
+   566→        { id: "timeline", title: "Timeline", content: "10 weeks: 3 weeks design, 5 weeks dev, 2 weeks testing" },
+   567→      ],
+   568→    },
+   569→    quotation: {
+   570→      id: "quot_seed_2",
+   571→      createdAt: daysAgo(4),
+   572→      updatedAt: daysAgo(3),
+   573→      status: "sent",
+   574→      items: [
+   575→        { id: "li1", category: "UI/UX", description: "Donor portal design + mobile-responsive", qty: 1, unitPrice: 6000 },
+   576→        { id: "li2", category: "Frontend", description: "React/Next.js donor portal", qty: 1, unitPrice: 12000 },
+   577→        { id: "li3", category: "Backend", description: "Node.js API + payment integration", qty: 1, unitPrice: 14000 },
+   578→        { id: "li4", category: "Testing", description: "Manual + automated testing", qty: 1, unitPrice: 3000 },
+   579→        { id: "li5", category: "Deployment", description: "AWS setup + CI/CD", qty: 1, unitPrice: 2000 },
+   580→        { id: "li6", category: "Maintenance", description: "6 months support (annual)", qty: 1, unitPrice: 6000 },
+   581→      ],
+   582→      paymentTerms: "40% advance, 30% on MVP, 30% on delivery",
+   583→      taxRate: 0,
+   584→      discount: 5,
+   585→      currency: "USD",
+   586→      validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+   587→      notes: "5% NGO discount applied. Tax-exempt.",
+   588→    },
+   589→    notes: "Lovely mission-driven client. Flexible on timeline, tight on budget.",
+   590→    timeline: [
+   591→      { status: "New", timestamp: daysAgo(8) },
+   592→      { status: "Reviewing", timestamp: daysAgo(7) },
+   593→      { status: "Proposal Ready", timestamp: daysAgo(6) },
+   594→      { status: "Proposal Ready", timestamp: daysAgo(5) },
+   595→      { status: "Proposal Ready", timestamp: daysAgo(3) },
+   596→    ],
+   597→  },
+   598→  {
+   599→    id: "sub_seed_omni_restaurant",
+   600→    sessionId: "srg_seed_omni_restaurant",
+   601→    submittedAt: daysAgo(20),
+   602→    updatedAt: daysAgo(12),
+   603→    templateId: "restaurant",
+   604→    templateName: "Restaurant / F&B",
+   605→    projectType: "Restaurant / F&B",
+   606→    projectName: "Omni POS + Ordering Platform",
+   607→    client: {
+   608→      fullName: "Marco Rossi",
+   609→      email: "marco@omnifnb.com",
+   610→      phone: "+971 4 123 4567",
+   611→      company: "Omni F&B Group",
+   612→      jobTitle: "Operations Director",
+   613→      country: "United Arab Emirates",
+   614→      timezone: "Asia/Dubai (GST, UTC+4)",
+   615→      preferredContact: "phone",
+   616→    },
+   617→    business: {
+   618→      legalName: "Omni F&B Group LLC",
+   619→      industry: "Restaurant / F&B",
+   620→      size: "201-1000",
+   621→      website: "https://omnifnb.com",
+   622→      stage: "enterprise",
+   623→      annualBudget: "50k_150k",
+   624→      targetLaunch: "3_6_months",
+   625→      existingStack: "Legacy POS, QuickBooks, no online ordering",
+   626→      competitors: "Careem DineOut, Deliveroo",
+   627→      mission: "Unify online + dine-in operations across 12 outlets",
+   628→      vision: "The most tech-forward F&B group in the GCC",
+   629→      targetAudience: "Diners in Dubai, Abu Dhabi, Doha",
+   630→      description:
+   631→        "Multi-outlet POS, online ordering, delivery, loyalty, and centralized menu management.",
+   632→    },
+   633→    goals: {
+   634→      primaryGoal: "Launch online ordering with 30% margin uplift in 4 months",
+   635→      secondaryGoals: [
+   636→        "Reduce order-to-table time by 40%",
+   637→        "Build customer loyalty program",
+   638→        "Centralized menu management",
+   639→      ],
+   640→      successMetrics: "30% margin uplift, 12 outlets live, 50k orders/month",
+   641→      priorities: { speed: 5, cost: 3, quality: 4, scalability: 4, innovation: 3 },
+   642→      deadline: "3_6_months",
+   643→      budgetRange: "50k_150k",
+   644→    },
+   645→    answers: {
+   646→      concept_type: "qsr",
+   647→      outlet_count: 12,
+   648→      cuisine_types: ["asian", "continental", "mexican"],
+   649→      avg_daily_orders: 1800,
+   650→      service_modes: ["dinein", "takeaway", "self_delivery", "aggregator"],
+   651→      modules_needed: ["pos", "menu", "ordering_web", "mobile_app", "kds", "inventory", "loyalty"],
+   652→      pos_detail: "ipad",
+   653→      loyalty_detail: ["points", "tiered", "cashback"],
+   654→      payment_methods: ["cards", "upi", "wallets"],
+   655→      aggregator_integrations: ["zomato", "swiggy"],
+   656→      gst_invoicing: true,
+   657→    },
+   658→    uploads: [
+   659→      {
+   660→        id: "up_seed_10",
+   661→        name: "Omni_Menu.xlsx",
+   662→        size: 220_000,
+   663→        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+   664→        category: "Data",
+   665→        status: "ready",
+   666→        uploadedAt: daysAgo(20),
+   667→      },
+   668→      {
+   669→        id: "up_seed_11",
+   670→        name: "omni_brand.zip",
+   671→        size: 15_000_000,
+   672→        type: "application/zip",
+   673→        category: "Brand Assets",
+   674→        status: "ready",
+   675→        uploadedAt: daysAgo(20),
+   676→      },
+   677→    ],
+   678→    teamRequirements: {
+   679→      staffCount: 350,
+   680→      roles: ["Outlet Manager", "Chef", "Cashier", "Delivery Driver"],
+   681→      permissions: ["View", "Edit", "Admin"],
+   682→      approvalHierarchy: ["Outlet Manager", "Operations Director", "CEO"],
+   683→    },
+   684→    workflow: {
+   685→      customer: {
+   686→        type: "customer",
+   687→        label: "Order Journey",
+   688→        enabled: true,
+   689→        stages: [
+   690→          { id: "s1", name: "Browse Menu", description: "", owner: "Customer", slaHours: 0 },
+   691→          { id: "s2", name: "Add to Cart", description: "", owner: "Customer", slaHours: 0 },
+   692→          { id: "s3", name: "Checkout", description: "", owner: "Customer", slaHours: 0 },
+   693→          { id: "s4", name: "Payment", description: "", owner: "System", slaHours: 0 },
+   694→          { id: "s5", name: "Kitchen", description: "", owner: "Chef", slaHours: 0 },
+   695→          { id: "s6", name: "Ready", description: "", owner: "Cashier", slaHours: 0 },
+   696→        ],
+   697→      },
+   698→    },
+   699→    status: "Approved",
+   700→    priority: "High",
+   701→    assignedTeam: {
+   702→      "Project Manager": "tm_1",
+   703→      "Frontend Developer": "tm_2",
+   704→      "Backend Developer": "tm_3",
+   705→      "UI Designer": "tm_4",
+   706→      "QA Engineer": "tm_5",
+   707→      "DevOps": "tm_6",
+   708→    },
+   709→    proposal: {
+   710→      id: "prop_seed_3",
+   711→      createdAt: daysAgo(18),
+   712→      updatedAt: daysAgo(17),
+   713→      status: "accepted",
+   714→      sections: [
+   715→        { id: "scope", title: "Project Scope", content: "Multi-outlet POS, online ordering, KDS, loyalty, centralized menu." },
+   716→        { id: "modules", title: "Modules", content: "POS, Menu, Online Ordering, Mobile App, KDS, Inventory, Loyalty" },
+   717→      ],
+   718→    },
+   719→    quotation: {
+   720→      id: "quot_seed_3",
+   721→      createdAt: daysAgo(16),
+   722→      updatedAt: daysAgo(15),
+   723→      status: "accepted",
+   724→      items: [
+   725→        { id: "li1", category: "UI/UX", description: "12-outlet POS + consumer app", qty: 1, unitPrice: 18000 },
+   726→        { id: "li2", category: "Frontend", description: "React + React Native", qty: 1, unitPrice: 28000 },
+   727→        { id: "li3", category: "Backend", description: "NestJS + PostgreSQL", qty: 1, unitPrice: 32000 },
+   728→        { id: "li4", category: "Testing", description: "12 outlets UAT", qty: 1, unitPrice: 8000 },
+   729→        { id: "li5", category: "Deployment", description: "AWS + on-prem hybrid", qty: 1, unitPrice: 6000 },
+   730→      ],
+   731→      paymentTerms: "30% advance, 30% on MVP, 20% on UAT, 20% on go-live",
+   732→      taxRate: 5,
+   733→      discount: 0,
+   734→      currency: "USD",
+   735→      validUntil: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+   736→      notes: "VAT 5% applicable in UAE.",
+   737→    },
+   738→    notes: "6-week sprint 1 in progress. KDS pilot at Downtown outlet live.",
+   739→    timeline: [
+   740→      { status: "New", timestamp: daysAgo(20) },
+   741→      { status: "Reviewing", timestamp: daysAgo(19) },
+   742→      { status: "Proposal Ready", timestamp: daysAgo(18) },
+   743→      { status: "Proposal Ready", timestamp: daysAgo(18) },
+   744→      { status: "Proposal Ready", timestamp: daysAgo(16) },
+   745→      { status: "Reviewing", timestamp: daysAgo(15) },
+   746→      { status: "Approved", timestamp: daysAgo(14) },
+   747→      { status: "Approved", timestamp: daysAgo(12) },
+   748→    ],
+   749→  },
+   750→  {
+   751→    id: "sub_seed_madrasa_app",
+   752→    sessionId: "srg_seed_madrasa_app",
+   753→    submittedAt: daysAgo(35),
+   754→    updatedAt: daysAgo(2),
+   755→    templateId: "jamaat",
+   756→    templateName: "Jamaat / Community",
+   757→    projectType: "Jamaat / Community",
+   758→    projectName: "Madrasa Hub — Community Platform",
+   759→    client: {
+   760→      fullName: "Imam Yusuf Abdullah",
+   761→      email: "yusuf@madrasahub.org",
+   762→      phone: "+44 7700 900123",
+   763→      company: "Madrasa Hub",
+   764→      jobTitle: "Director",
+   765→      country: "United Kingdom",
+   766→      timezone: "Europe/London (GMT, UTC+0)",
+   767→      preferredContact: "email",
+   768→    },
+   769→    business: {
+   770→      legalName: "Madrasa Hub",
+   771→      industry: "Religious / Community",
+   772→      size: "11-50",
+   773→      website: "https://madrasahub.org",
+   774→      stage: "nonprofit",
+   775→      annualBudget: "15k_50k",
+   776→      targetLaunch: "completed",
+   777→      existingStack: "WhatsApp, Excel, WordPress",
+   778→      competitors: "None in this niche",
+   779→      mission: "Centralize madrasa operations across 30 units",
+   780→      vision: "A digital backbone for every community madrasa",
+   781→      targetAudience: "Madrasa teachers, parents, students in UK",
+   782→      description:
+   783→        "Member database, attendance, fees, exams, parent portal, broadcast.",
+   784→    },
+   785→    goals: {
+   786→      primaryGoal: "Centralize 30 madrasa units onto one platform",
+   787→      secondaryGoals: ["Digitize attendance", "Parent portal", "Fee collection"],
+   788→      successMetrics: "30 units live, 90% attendance digitized",
+   789→      priorities: { speed: 3, cost: 5, quality: 3, scalability: 4, innovation: 2 },
+   790→      deadline: "3_6_months",
+   791→      budgetRange: "15k_50k",
+   792→    },
+   793→    answers: {
+   794→      community_type: "madrasa",
+   795→      member_count: 2500,
+   796→      unit_count: 30,
+   797→      hierarchy_levels: "three_level",
+   798→      languages: ["en", "ur", "ar"],
+   799→      modules_needed: ["members", "madrasa", "events", "announcements", "mobile_app"],
+   800→      madrasa_features: ["enrollment", "attendance", "grades", "teachers", "parents", "fees"],
+   801→    },
+   802→    uploads: [
+   803→      {
+   804→        id: "up_seed_12",
+   805→        name: "Madrasa_Hierarchy.pdf",
+   806→        size: 800_000,
+   807→        type: "application/pdf",
+   808→        category: "Documents",
+   809→        status: "ready",
+   810→        uploadedAt: daysAgo(35),
+   811→      },
+   812→    ],
+   813→    teamRequirements: {
+   814→      staffCount: 30,
+   815→      roles: ["Principal", "Teacher", "Parent", "Admin"],
+   816→      permissions: ["View", "Edit", "Admin"],
+   817→      approvalHierarchy: ["Principal", "Director"],
+   818→    },
+   819→    workflow: {
+   820→      customer: {
+   821→        type: "customer",
+   822→        label: "Member Journey",
+   823→        enabled: true,
+   824→        stages: [
+   825→          { id: "s1", name: "Onboarding", description: "", owner: "Admin", slaHours: 24 },
+   826→          { id: "s2", name: "Profile Verification", description: "", owner: "Principal", slaHours: 48 },
+   827→        ],
+   828→      },
+   829→    },
+   830→    status: "Approved",
+   831→    priority: "Low",
+   832→    assignedTeam: {
+   833→      "Project Manager": "tm_1",
+   834→      "Frontend Developer": "tm_8",
+   835→      "UI Designer": "tm_10",
+   836→      "QA Engineer": "tm_5",
+   837→    },
+   838→    proposal: {
+   839→      id: "prop_seed_4",
+   840→      createdAt: daysAgo(33),
+   841→      updatedAt: daysAgo(33),
+   842→      status: "accepted",
+   843→      sections: [
+   844→        { id: "scope", title: "Project Scope", content: "Community platform with madrasa module, events, and mobile app." },
+   845→      ],
+   846→    },
+   847→    quotation: {
+   848→      id: "quot_seed_4",
+   849→      createdAt: daysAgo(32),
+   850→      updatedAt: daysAgo(32),
+   851→      status: "accepted",
+   852→      items: [
+   853→        { id: "li1", category: "UI/UX", description: "Web + mobile design", qty: 1, unitPrice: 5000 },
+   854→        { id: "li2", category: "Frontend", description: "React + React Native", qty: 1, unitPrice: 14000 },
+   855→        { id: "li3", category: "Backend", description: "Node.js + Postgres", qty: 1, unitPrice: 10000 },
+   856→      ],
+   857→      paymentTerms: "50% advance, 50% on delivery",
+   858→      taxRate: 0,
+   859→      discount: 10,
+   860→      currency: "USD",
+   861→      validUntil: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+   862→      notes: "Community discount applied.",
+   863→    },
+   864→    notes: "Delivered successfully. Now in maintenance.",
+   865→    timeline: [
+   866→      { status: "New", timestamp: daysAgo(35) },
+   867→      { status: "Reviewing", timestamp: daysAgo(34) },
+   868→      { status: "Approved", timestamp: daysAgo(32) },
+   869→      { status: "Approved", timestamp: daysAgo(28) },
+   870→      { status: "Approved", timestamp: daysAgo(7) },
+   871→      { status: "Approved", timestamp: daysAgo(3) },
+   872→      { status: "Approved", timestamp: daysAgo(2) },
+   873→    ],
+   874→  },
+   875→];
+   876→
+   877→/* --------------------------- Seed: Dev Projects --------------------------- */
+   878→
+   879→const SEED_PROJECTS: DevProject[] = [
+   880→  {
+   881→    id: "proj_seed_omni",
+   882→    name: "Omni POS + Ordering Platform",
+   883→    clientId: "client_seed_omni",
+   884→    clientName: "Marco Rossi",
+   885→    clientCompany: "Omni F&B Group",
+   886→    submissionId: "sub_seed_omni_restaurant",
+   887→    status: "Development",
+   888→    priority: "High",
+   889→    techStack: ["React", "React Native", "NestJS", "PostgreSQL", "AWS", "Docker"],
+   890→    assignedTeam: {
+   891→      "Project Manager": "tm_1",
+   892→      "Frontend Developer": "tm_2",
+   893→      "Backend Developer": "tm_3",
+   894→      "UI Designer": "tm_4",
+   895→      "QA Engineer": "tm_5",
+   896→      "DevOps": "tm_6",
+   897→    },
+   898→    startDate: daysAgo(12),
+   899→    estimatedEndDate: daysAgo(-90),
+   900→    currentStage: "Development",
+   901→    progress: 35,
+   902→    budget: 92000,
+   903→    currency: "USD",
+   904→    description: "Multi-outlet POS, online ordering, KDS, loyalty, centralized menu management across 12 outlets.",
+   905→    tasks: [
+   906→      { id: "task_1", title: "POS terminal setup", description: "iPad POS with receipt printing", assigneeId: "tm_2", status: "Done", priority: "High", dueDate: daysAgo(-5), createdAt: daysAgo(12) },
+   907→      { id: "task_2", title: "KDS integration", description: "Kitchen display system for order routing", assigneeId: "tm_3", status: "In Progress", priority: "High", dueDate: daysAgo(-10), createdAt: daysAgo(10) },
+   908→      { id: "task_3", title: "Loyalty program", description: "Points + tiers + cashback", assigneeId: "tm_2", status: "To Do", priority: "Medium", dueDate: daysAgo(-30), createdAt: daysAgo(5) },
+   909→      { id: "task_4", title: "Aggregator integration", description: "Zomato + Swiggy order sync", assigneeId: "tm_3", status: "Review", priority: "Medium", dueDate: daysAgo(-15), createdAt: daysAgo(8) },
+   910→    ],
+   911→    milestones: [
+   912→      { id: "ms_1", title: "POS MVP at Downtown outlet", description: "Single outlet live with POS", dueDate: daysAgo(-5), completed: true, completedAt: daysAgo(3) },
+   913→      { id: "ms_2", title: "KDS pilot", description: "Kitchen display at 2 outlets", dueDate: daysAgo(10), completed: false },
+   914→      { id: "ms_3", title: "Online ordering launch", description: "Web + app ordering live", dueDate: daysAgo(-45), completed: false },
+   915→      { id: "ms_4", title: "All 12 outlets live", description: "Full rollout", dueDate: daysAgo(-90), completed: false },
+   916→    ],
+   917→    notes: "6-week sprint 1 in progress. KDS pilot at Downtown outlet live.",
+   918→    createdAt: daysAgo(14),
+   919→    updatedAt: daysAgo(1),
+   920→  },
+   921→  {
+   922→    id: "proj_seed_madrasa",
+   923→    name: "Madrasa Hub — Community Platform",
+   924→    clientId: "client_seed_madrasa",
+   925→    clientName: "Imam Yusuf Abdullah",
+   926→    clientCompany: "Madrasa Hub",
+   927→    submissionId: "sub_seed_madrasa_app",
+   928→    status: "Maintenance",
+   929→    priority: "Low",
+   930→    techStack: ["React", "React Native", "Node.js", "PostgreSQL", "Vercel"],
+   931→    assignedTeam: {
+   932→      "Project Manager": "tm_1",
+   933→      "Frontend Developer": "tm_8",
+   934→      "UI Designer": "tm_10",
+   935→      "QA Engineer": "tm_5",
+   936→    },
+   937→    startDate: daysAgo(33),
+   938→    estimatedEndDate: daysAgo(-3),
+   939→    currentStage: "Maintenance",
+   940→    progress: 100,
+   941→    budget: 27000,
+   942→    currency: "USD",
+   943→    description: "Community platform with madrasa module, events, attendance, fees, and mobile app.",
+   944→    tasks: [
+   945→      { id: "task_5", title: "Bug fixes — attendance sync", description: "Fix offline attendance sync issue", assigneeId: "tm_8", status: "Done", priority: "Medium", dueDate: daysAgo(2), createdAt: daysAgo(10) },
+   946→      { id: "task_6", title: "Feature: exam report cards", description: "Add PDF report card generation", assigneeId: "tm_8", status: "In Progress", priority: "Low", dueDate: daysAgo(-7), createdAt: daysAgo(3) },
+   947→    ],
+   948→    milestones: [
+   949→      { id: "ms_5", title: "Platform launch", description: "30 units live", dueDate: daysAgo(3), completed: true, completedAt: daysAgo(3) },
+   950→    ],
+   951→    notes: "Delivered successfully. Now in maintenance with monthly retainer.",
+   952→    createdAt: daysAgo(35),
+   953→    updatedAt: daysAgo(2),
+   954→  },
+   955→  {
+   956→    id: "proj_seed_helios",
+   957→    name: "Helios ERP Modernization",
+   958→    clientId: "client_seed_helios",
+   959→    clientName: "Rajiv Menon",
+   960→    clientCompany: "Helios Logistics",
+   961→    submissionId: "sub_seed_helios_erp",
+   962→    status: "Planning",
+   963→    priority: "High",
+   964→    techStack: ["Next.js", "NestJS", "PostgreSQL", "AWS", "Redis"],
+   965→    assignedTeam: {
+   966→      "Project Manager": "tm_1",
+   967→      "Backend Developer": "tm_3",
+   968→      "Business Analyst": "tm_7",
+   969→    },
+   970→    startDate: daysAgo(3),
+   971→    estimatedEndDate: daysAgo(-150),
+   972→    currentStage: "Planning",
+   973→    progress: 10,
+   974→    budget: 120000,
+   975→    currency: "USD",
+   976→    description: "Replace 14 legacy systems with a unified ERP covering finance, inventory, HR, and operations.",
+   977→    tasks: [
+   978→      { id: "task_7", title: "Requirements workshop", description: "2-day workshop with all department heads", assigneeId: "tm_7", status: "Done", priority: "High", dueDate: daysAgo(1), createdAt: daysAgo(5) },
+   979→      { id: "task_8", title: "Architecture design", description: "Microservices architecture for 14 modules", assigneeId: "tm_3", status: "In Progress", priority: "High", dueDate: daysAgo(-14), createdAt: daysAgo(3) },
+   980→      { id: "task_9", title: "Data migration plan", description: "Plan for migrating Tally data", assigneeId: "tm_7", status: "To Do", priority: "Medium", dueDate: daysAgo(-21), createdAt: daysAgo(1) },
+   981→    ],
+   982→    milestones: [
+   983→      { id: "ms_6", title: "Architecture sign-off", description: "CFO + CTO approval on architecture", dueDate: daysAgo(-14), completed: false },
+   984→      { id: "ms_7", title: "Finance module MVP", description: "GL + AP + AR live", dueDate: daysAgo(-60), completed: false },
+   985→      { id: "ms_8", title: "Full ERP rollout", description: "All 14 branches migrated", dueDate: daysAgo(-150), completed: false },
+   986→    ],
+   987→    notes: "Architecture in progress. Client wants Tally data migration within first 3 months.",
+   988→    createdAt: daysAgo(5),
+   989→    updatedAt: daysAgo(1),
+   990→  },
+   991→  {
+   992→    id: "proj_seed_atlas",
+   993→    name: "Atlas Analytics SaaS",
+   994→    clientId: "client_seed_atlas",
+   995→    clientName: "Sarah Chen",
+   996→    clientCompany: "Atlas Analytics",
+   997→    submissionId: "sub_seed_atlas_saaS",
+   998→    status: "UI/UX",
+   999→    priority: "High",
+  1000→    techStack: ["React", "Next.js", "Node.js", "ClickHouse", "GCP"],
+  1001→    assignedTeam: {
+  1002→      "Project Manager": "tm_1",
+  1003→      "Frontend Developer": "tm_2",
+  1004→      "Backend Developer": "tm_3",
+  1005→      "UI Designer": "tm_4",
+  1006→    },
+  1007→    startDate: daysAgo(7),
+  1008→    estimatedEndDate: daysAgo(-100),
+  1009→    currentStage: "UI/UX",
+  1010→    progress: 20,
+  1011→    budget: 85000,
+  1012→    currency: "USD",
+  1013→    description: "Product analytics SaaS processing 2B+ events daily with AI-generated insight summaries.",
+  1014→    tasks: [
+  1015→      { id: "task_10", title: "Design system setup", description: "Component library + design tokens", assigneeId: "tm_4", status: "In Progress", priority: "High", dueDate: daysAgo(-3), createdAt: daysAgo(7) },
+  1016→      { id: "task_11", title: "Dashboard wireframes", description: "Main analytics dashboard + drill-downs", assigneeId: "tm_4", status: "In Progress", priority: "High", dueDate: daysAgo(-7), createdAt: daysAgo(5) },
+  1017→      { id: "task_12", title: "Event ingestion pipeline", description: "Kafka + ClickHouse pipeline", assigneeId: "tm_3", status: "To Do", priority: "High", dueDate: daysAgo(-21), createdAt: daysAgo(3) },
+  1018→    ],
+  1019→    milestones: [
+  1020→      { id: "ms_9", title: "Design approval", description: "Client signs off on UI/UX", dueDate: daysAgo(-7), completed: false },
+  1021→      { id: "ms_10", title: "MVP launch", description: "Core analytics + dashboards", dueDate: daysAgo(-60), completed: false },
+  1022→    ],
+  1023→    notes: "Strong technical team on client side — will co-build. Video calls preferred.",
+  1024→    createdAt: daysAgo(8),
+  1025→    updatedAt: daysAgo(1),
+  1026→  },
+  1027→];
+  1028→
+  1029→/* --------------------------- Seed: Clients --------------------------- */
+  1030→
+  1031→const SEED_CLIENTS: Client[] = [
+  1032→  {
+  1033→    id: "client_seed_helios",
+  1034→    company: "Helios Logistics Pvt Ltd",
+  1035→    contactPerson: "Rajiv Menon",
+  1036→    email: "rajiv.menon@helioslogistics.com",
+  1037→    phone: "+91 98765 43210",
+  1038→    website: "https://helioslogistics.com",
+  1039→    industry: "Logistics / Supply Chain",
+  1040→    address: "Mumbai, India",
+  1041→    status: "Active",
+  1042→    createdAt: daysAgo(2),
+  1043→    notes: "Enterprise client. Migrating from Tally + custom PHP. High urgency.",
+  1044→    submissionIds: ["sub_seed_helios_erp"],
+  1045→    projectIds: ["proj_seed_helios"],
+  1046→  },
+  1047→  {
+  1048→    id: "client_seed_atlas",
+  1049→    company: "Atlas Analytics Inc",
+  1050→    contactPerson: "Sarah Chen",
+  1051→    email: "sarah.chen@atlasanalytics.io",
+  1052→    phone: "+1 415 555 0182",
+  1053→    website: "https://atlasanalytics.io",
+  1054→    industry: "Technology / SaaS",
+  1055→    address: "San Francisco, USA",
+  1056→    status: "Active",
+  1057→    createdAt: daysAgo(5),
+  1058→    notes: "US-based SaaS startup. Strong technical team. Prefers video calls.",
+  1059→    submissionIds: ["sub_seed_atlas_saaS"],
+  1060→    projectIds: ["proj_seed_atlas"],
+  1061→  },
+  1062→  {
+  1063→    id: "client_seed_nova",
+  1064→    company: "Nova Legal Partners LLP",
+  1065→    contactPerson: "David Okonkwo",
+  1066→    email: "david@novalegal.com",
+  1067→    phone: "+44 20 7946 0958",
+  1068→    website: "https://novalegal.com",
+  1069→    industry: "Legal / Professional Services",
+  1070→    address: "London, UK",
+  1071→    status: "Prospect",
+  1072→    createdAt: daysAgo(1),
+  1073→    notes: "Hot lead via referral. AI legal assistant. Needs quick response.",
+  1074→    submissionIds: ["sub_seed_nova_legal"],
+  1075→    projectIds: [],
+  1076→  },
+  1077→  {
+  1078→    id: "client_seed_zahra",
+  1079→    company: "Zahra Foundation",
+  1080→    contactPerson: "Zahra Al-Rashid",
+  1081→    email: "zahra@zahrafoundation.org",
+  1082→    phone: "+971 50 123 4567",
+  1083→    website: "https://zahrafoundation.org",
+  1084→    industry: "Non-profit / NGO",
+  1085→    address: "Dubai, UAE",
+  1086→    status: "Active",
+  1087→    createdAt: daysAgo(8),
+  1088→    notes: "Mission-driven NGO. Flexible timeline, tight budget. 5% NGO discount.",
+  1089→    submissionIds: ["sub_seed_zahra_trust"],
+  1090→    projectIds: [],
+  1091→  },
+  1092→  {
+  1093→    id: "client_seed_omni",
+  1094→    company: "Omni F&B Group LLC",
+  1095→    contactPerson: "Marco Rossi",
+  1096→    email: "marco@omnifnb.com",
+  1097→    phone: "+971 4 123 4567",
+  1098→    website: "https://omnifnb.com",
+  1099→    industry: "Restaurant / F&B",
+  1100→    address: "Dubai, UAE",
+  1101→    status: "Active",
+  1102→    createdAt: daysAgo(20),
+  1103→    notes: "12-outlet F&B group. VAT 5% applicable. Hybrid deployment.",
+  1104→    submissionIds: ["sub_seed_omni_restaurant"],
+  1105→    projectIds: ["proj_seed_omni"],
+  1106→  },
+  1107→  {
+  1108→    id: "client_seed_madrasa",
+  1109→    company: "Madrasa Hub",
+  1110→    contactPerson: "Imam Yusuf Abdullah",
+  1111→    email: "yusuf@madrasahub.org",
+  1112→    phone: "+44 7700 900123",
+  1113→    website: "https://madrasahub.org",
+  1114→    industry: "Religious / Community",
+  1115→    address: "London, UK",
+  1116→    status: "Active",
+  1117→    createdAt: daysAgo(35),
+  1118→    notes: "Community platform delivered. Monthly maintenance retainer.",
+  1119→    submissionIds: ["sub_seed_madrasa_app"],
+  1120→    projectIds: ["proj_seed_madrasa"],
+  1121→  },
+  1122→];
+  1123→
+  1124→/* --------------------------- Seed: Invoices --------------------------- */
+  1125→
+  1126→const SEED_INVOICES: Invoice[] = [
+  1127→  {
+  1128→    id: "inv_seed_1",
+  1129→    invoiceNumber: "INV-2025-001",
+  1130→    clientId: "client_seed_omni",
+  1131→    clientName: "Marco Rossi",
+  1132→    clientCompany: "Omni F&B Group",
+  1133→    amount: 27600,
+  1134→    currency: "USD",
+  1135→    status: "Paid",
+  1136→    issueDate: daysAgo(14),
+  1137→    dueDate: daysAgo(0),
+  1138→    paidDate: daysAgo(2),
+  1139→    projectId: "proj_seed_omni",
+  1140→    items: [
+  1141→      { description: "40% advance — Omni POS + Ordering Platform", amount: 27600 },
+  1142→    ],
+  1143→    notes: "VAT 5% included",
+  1144→  },
+  1145→  {
+  1146→    id: "inv_seed_2",
+  1147→    invoiceNumber: "INV-2025-002",
+  1148→    clientId: "client_seed_madrasa",
+  1149→    clientName: "Imam Yusuf Abdullah",
+  1150→    clientCompany: "Madrasa Hub",
+  1151→    amount: 13500,
+  1152→    currency: "USD",
+  1153→    status: "Paid",
+  1154→    issueDate: daysAgo(33),
+  1155→    dueDate: daysAgo(18),
+  1156→    paidDate: daysAgo(20),
+  1157→    projectId: "proj_seed_madrasa",
+  1158→    items: [
+  1159→      { description: "50% advance — Madrasa Hub Platform", amount: 13500 },
+  1160→    ],
+  1161→  },
+  1162→  {
+  1163→    id: "inv_seed_3",
+  1164→    invoiceNumber: "INV-2025-003",
+  1165→    clientId: "client_seed_madrasa",
+  1166→    clientName: "Imam Yusuf Abdullah",
+  1167→    clientCompany: "Madrasa Hub",
+  1168→    amount: 13500,
+  1169→    currency: "USD",
+  1170→    status: "Paid",
+  1171→    issueDate: daysAgo(3),
+  1172→    dueDate: daysAgo(-12),
+  1173→    paidDate: daysAgo(1),
+  1174→    projectId: "proj_seed_madrasa",
+  1175→    items: [
+  1176→      { description: "50% final — Madrasa Hub Platform", amount: 13500 },
+  1177→    ],
+  1178→  },
+  1179→  {
+  1180→    id: "inv_seed_4",
+  1181→    invoiceNumber: "INV-2025-004",
+  1182→    clientId: "client_seed_omni",
+  1183→    clientName: "Marco Rossi",
+  1184→    clientCompany: "Omni F&B Group",
+  1185→    amount: 27600,
+  1186→    currency: "USD",
+  1187→    status: "Pending",
+  1188→    issueDate: daysAgo(5),
+  1189→    dueDate: daysAgo(-25),
+  1190→    projectId: "proj_seed_omni",
+  1191→    items: [
+  1192→      { description: "30% on MVP — Omni POS + Ordering Platform", amount: 27600 },
+  1193→    ],
+  1194→  },
+  1195→  {
+  1196→    id: "inv_seed_5",
+  1197→    invoiceNumber: "INV-2025-005",
+  1198→    clientId: "client_seed_atlas",
+  1199→    clientName: "Sarah Chen",
+  1200→    clientCompany: "Atlas Analytics Inc",
+  1201→    amount: 17000,
+  1202→    currency: "USD",
+  1203→    status: "Pending",
+  1204→    issueDate: daysAgo(3),
+  1205→    dueDate: daysAgo(-12),
+  1206→    projectId: "proj_seed_atlas",
+  1207→    items: [
+  1208→      { description: "20% advance — Atlas Analytics SaaS", amount: 17000 },
+  1209→    ],
+  1210→  },
+  1211→  {
+  1212→    id: "inv_seed_6",
+  1213→    invoiceNumber: "INV-2025-006",
+  1214→    clientId: "client_seed_zahra",
+  1215→    clientName: "Zahra Al-Rashid",
+  1216→    clientCompany: "Zahra Foundation",
+  1217→    amount: 12255,
+  1218→    currency: "USD",
+  1219→    status: "Overdue",
+  1220→    issueDate: daysAgo(15),
+  1221→    dueDate: daysAgo(1),
+  1222→    projectId: undefined,
+  1223→    items: [
+  1224→      { description: "30% advance — Zahra Foundation Portal", amount: 12255 },
+  1225→    ],
+  1226→    notes: "5% NGO discount applied. Tax-exempt.",
+  1227→  },
+  1228→  {
+  1229→    id: "inv_seed_7",
+  1230→    invoiceNumber: "INV-2025-007",
+  1231→    clientId: "client_seed_madrasa",
+  1232→    clientName: "Imam Yusuf Abdullah",
+  1233→    clientCompany: "Madrasa Hub",
+  1234→    amount: 500,
+  1235→    currency: "USD",
+  1236→    status: "Draft",
+  1237→    issueDate: daysAgo(0),
+  1238→    dueDate: daysAgo(-30),
+  1239→    items: [
+  1240→      { description: "Monthly maintenance retainer — December", amount: 500 },
+  1241→    ],
+  1242→  },
+  1243→];
+  1244→
+  1245→/* --------------------------- Seed: Meetings --------------------------- */
+  1246→
+  1247→const SEED_MEETINGS: Meeting[] = [
+  1248→  {
+  1249→    id: "mtg_seed_1",
+  1250→    title: "Helios ERP — Architecture Review",
+  1251→    type: "review",
+  1252→    clientId: "client_seed_helios",
+  1253→    clientName: "Rajiv Menon",
+  1254→    projectId: "proj_seed_helios",
+  1255→    date: Date.now() + 2 * 24 * 60 * 60 * 1000, // 2 days from now
+  1256→    duration: 90,
+  1257→    attendees: ["Aarav Mehta", "Rohan Kapoor", "Arjun Nair", "Rajiv Menon"],
+  1258→    location: "Google Meet",
+  1259→    notes: "Review microservices architecture proposal. CFO + CTO will join.",
+  1260→    status: "scheduled",
+  1261→  },
+  1262→  {
+  1263→    id: "mtg_seed_2",
+  1264→    title: "Atlas Analytics — Design Approval",
+  1265→    type: "client",
+  1266→    clientId: "client_seed_atlas",
+  1267→    clientName: "Sarah Chen",
+  1268→    projectId: "proj_seed_atlas",
+  1269→    date: Date.now() + 4 * 24 * 60 * 60 * 1000,
+  1270→    duration: 60,
+  1271→    attendees: ["Aarav Mehta", "Sara Khan", "Sarah Chen"],
+  1272→    location: "Zoom",
+  1273→    notes: "Walk through dashboard designs and get sign-off on UI direction.",
+  1274→    status: "scheduled",
+  1275→  },
+  1276→  {
+  1277→    id: "mtg_seed_3",
+  1278→    title: "Nova Legal — Discovery Call",
+  1279→    type: "kickoff",
+  1280→    clientId: "client_seed_nova",
+  1281→    clientName: "David Okonkwo",
+  1282→    date: Date.now() + 1 * 24 * 60 * 60 * 1000,
+  1283→    duration: 45,
+  1284→    attendees: ["Aarav Mehta", "Arjun Nair", "David Okonkwo"],
+  1285→    location: "Google Meet",
+  1286→    notes: "Initial discovery call. Understand legal RAG requirements.",
+  1287→    status: "scheduled",
+  1288→  },
+  1289→  {
+  1290→    id: "mtg_seed_4",
+  1291→    title: "Omni POS — Sprint Demo",
+  1292→    type: "review",
+  1293→    clientId: "client_seed_omni",
+  1294→    clientName: "Marco Rossi",
+  1295→    projectId: "proj_seed_omni",
+  1296→    date: Date.now() + 5 * 24 * 60 * 60 * 1000,
+  1297→    duration: 60,
+  1298→    attendees: ["Aarav Mehta", "Priya Sharma", "Rohan Kapoor", "Marco Rossi"],
+  1299→    location: "Google Meet",
+  1300→    notes: "Demo KDS pilot at Downtown outlet. Show online ordering progress.",
+  1301→    status: "scheduled",
+  1302→  },
+  1303→  {
+  1304→    id: "mtg_seed_5",
+  1305→    title: "Weekly Team Standup",
+  1306→    type: "internal",
+  1307→    date: Date.now() + 1 * 60 * 60 * 1000, // 1 hour from now
+  1308→    duration: 30,
+  1309→    attendees: ["Aarav Mehta", "Priya Sharma", "Rohan Kapoor", "Sara Khan"],
+  1310→    location: "Office / Meet",
+  1311→    notes: "Weekly sync across all active projects.",
+  1312→    status: "scheduled",
+  1313→  },
+  1314→  {
+  1315→    id: "mtg_seed_6",
+  1316→    title: "Zahra Foundation — Follow-up",
+  1317→    type: "follow-up",
+  1318→    clientId: "client_seed_zahra",
+  1319→    clientName: "Zahra Al-Rashid",
+  1320→    date: Date.now() - 2 * 24 * 60 * 60 * 1000, // 2 days ago
+  1321→    duration: 30,
+  1322→    attendees: ["Aarav Mehta", "Zahra Al-Rashid"],
+  1323→    location: "Phone",
+  1324→    notes: "Follow up on quotation. Client asked for payment plan options.",
+  1325→    status: "completed",
+  1326→  },
+  1327→];
+  1328→
+  1329→/* --------------------------- Seed: Activities --------------------------- */
+  1330→
+  1331→const SEED_ACTIVITIES: ActivityLog[] = [
+  1332→  { id: "act_1", type: "submission", action: "New submission", description: "Nova AI Legal Assistant submitted by David Okonkwo", timestamp: daysAgo(1), entityId: "sub_seed_nova_legal", entityType: "submission", actor: "System" },
+  1333→  { id: "act_2", type: "project", action: "Project created", description: "Helios ERP Modernization project created", timestamp: daysAgo(5), entityId: "proj_seed_helios", entityType: "project", actor: "Aarav Mehta" },
+  1334→  { id: "act_3", type: "invoice", action: "Invoice paid", description: "INV-2025-001 paid by Omni F&B Group ($27,600)", timestamp: daysAgo(2), entityId: "inv_seed_1", entityType: "invoice", actor: "System" },
+  1335→  { id: "act_4", type: "quotation", action: "Quotation sent", description: "Quotation sent to Zahra Foundation ($40,850)", timestamp: daysAgo(3), entityId: "sub_seed_zahra_trust", entityType: "submission", actor: "Aarav Mehta" },
+  1336→  { id: "act_5", type: "team", action: "Team assigned", description: "6 team members assigned to Omni POS project", timestamp: daysAgo(12), entityId: "proj_seed_omni", entityType: "project", actor: "Aarav Mehta" },
+  1337→  { id: "act_6", type: "meeting", action: "Meeting scheduled", description: "Architecture Review with Helios scheduled for +2 days", timestamp: daysAgo(1), entityId: "mtg_seed_1", entityType: "meeting", actor: "Aarav Mehta" },
+  1338→  { id: "act_7", type: "project", action: "Stage update", description: "Atlas Analytics moved to UI/UX stage", timestamp: daysAgo(3), entityId: "proj_seed_atlas", entityType: "project", actor: "Aarav Mehta" },
+  1339→  { id: "act_8", type: "invoice", action: "Invoice overdue", description: "INV-2025-006 is now overdue (Zahra Foundation)", timestamp: daysAgo(1), entityId: "inv_seed_6", entityType: "invoice", actor: "System" },
+  1340→  { id: "act_9", type: "submission", action: "Status changed", description: "Atlas Analytics marked as Proposal Ready", timestamp: daysAgo(3), entityId: "sub_seed_atlas_saaS", entityType: "submission", actor: "Aarav Mehta" },
+  1341→  { id: "act_10", type: "project", action: "Milestone completed", description: "POS MVP at Downtown outlet completed for Omni", timestamp: daysAgo(3), entityId: "proj_seed_omni", entityType: "project", actor: "Aarav Mehta" },
+  1342→];
+  1343→
+  1344→/* --------------------------- Seed runner --------------------------- */
+  1345→
+  1346→export function seedIfNeeded(): void {
+  1347→  if (typeof window === "undefined") return;
+  1348→  if (localStorage.getItem(SEED_FLAG)) return;
+  1349→  const existing = loadSubmissions();
+  1350→  if (existing.length === 0) {
+  1351→    saveSubmissions(SEED_SUBMISSIONS);
+  1352→    saveProjects(SEED_PROJECTS);
+  1353→    saveClients(SEED_CLIENTS);
+  1354→    saveInvoices(SEED_INVOICES);
+  1355→    saveMeetings(SEED_MEETINGS);
+  1356→    saveActivities(SEED_ACTIVITIES);
+  1357→    // Add welcome notifications
+  1358→    addNotification({
+  1359→      type: "submission",
+  1360→      title: "New submission received",
+  1361→      description: "Nova AI Legal Assistant — Critical priority",
+  1362→      submissionId: "sub_seed_nova_legal",
+  1363→    });
+  1364→    addNotification({
+  1365→      type: "quotation",
+  1366→      title: "Quotation accepted",
+  1367→      description: "Omni POS + Ordering Platform — $92,000",
+  1368→      submissionId: "sub_seed_omni_restaurant",
+  1369→    });
+  1370→    addNotification({
+  1371→      type: "proposal",
+  1372→      title: "Proposal sent",
+  1373→      description: "Zahra Foundation Portal — awaiting response",
+  1374→      submissionId: "sub_seed_zahra_trust",
+  1375→    });
+  1376→    addNotification({
+  1377→      type: "team",
+  1378→      title: "Team assigned",
+  1379→      description: "Helios ERP Modernization — 3 members assigned",
+  1380→      submissionId: "sub_seed_helios_erp",
+  1381→    });
+  1382→    addNotification({
+  1383→      type: "invoice",
+  1384→      title: "Invoice paid",
+  1385→      description: "INV-2025-001 paid by Omni F&B Group ($27,600)",
+  1386→      invoiceId: "inv_seed_1",
+  1387→    });
+  1388→    addNotification({
+  1389→      type: "meeting",
+  1390→      title: "Meeting reminder",
+  1391→      description: "Nova Legal — Discovery Call tomorrow at 10:00 AM",
+  1392→      submissionId: "sub_seed_nova_legal",
+  1393→    });
+  1394→  }
+  1395→  localStorage.setItem(SEED_FLAG, "1");
+  1396→}
+  1397→
+  1398→/* --------------------------- SRG → Admin bridge --------------------------- */
+  1399→
+  1400→/**
+  1401→ * Convert an SRG submission payload (from /start-project) into an
+  1402→ * AdminSubmission and persist it in mbtl_submissions. Also fires a
+  1403→ * notification.
+  1404→ */
+  1405→export function ingestSrgSubmission(payload: SrgSubmissionPayload): AdminSubmission {
+  1406→  const template = getTemplate(payload.templateId);
+  1407→  const templateName = template?.name ?? payload.templateId;
+  1408→  const projectName = deriveProjectName(payload, templateName);
+  1409→
+  1410→  // Build SRG sections for display (question label + answer)
+  1411→  const srgSections = template
+  1412→    ? template.sections.map((section) => ({
+  1413→        id: section.id,
+  1414→        title: section.title,
+  1415→        questions: section.questions
+  1416→          .filter((q) => payload.answers[q.id] !== undefined && payload.answers[q.id] !== null && payload.answers[q.id] !== "")
+  1417→          .map((q) => ({
+  1418→            id: q.id,
+  1419→            label: q.label,
+  1420→            type: q.type,
+  1421→            answer: payload.answers[q.id],
+  1422→          })),
+  1423→      })).filter((s) => s.questions.length > 0)
+  1424→    : [];
+  1425→
+  1426→  // Detect duplicate (same sessionId) and replace
+  1427→  const existing = loadSubmissions();
+  1428→  const existingIdx = existing.findIndex(
+  1429→    (s) => s.sessionId === payload.sessionId
+  1430→  );
+  1431→
+  1432→  // Pick a priority based on budget + deadline
+  1433→  const priority: Priority = detectPriority(payload);
+  1434→
+  1435→  const submission: AdminSubmission = {
+  1436→    id: existingIdx >= 0 ? existing[existingIdx].id : generateId("sub"),
+  1437→    sessionId: payload.sessionId,
+  1438→    submittedAt: payload.submittedAt,
+  1439→    updatedAt: Date.now(),
+  1440→    templateId: payload.templateId,
+  1441→    templateName,
+  1442→    projectType: payload.projectType,
+  1443→    projectName,
+  1444→    client: {
+  1445→      fullName: payload.clientDetails.fullName,
+  1446→      email: payload.clientDetails.email,
+  1447→      phone: payload.clientDetails.phone,
+  1448→      company: payload.clientDetails.company,
+  1449→      jobTitle: payload.clientDetails.jobTitle,
+  1450→      country: payload.clientDetails.country,
+  1451→      timezone: payload.clientDetails.timezone,
+  1452→      preferredContact: payload.clientDetails.preferredContact,
+  1453→    },
+  1454→    business: {
+  1455→      ...payload.businessDetails,
+  1456→      mission: "",
+  1457→      vision: "",
+  1458→      targetAudience: "",
+  1459→      description: payload.businessDetails.existingStack,
+  1460→    },
+  1461→    goals: payload.projectGoals,
+  1462→    answers: payload.answers,
+  1463→    uploads: payload.uploads.map((u) => ({
+  1464→      id: u.id,
+  1465→      name: u.name,
+  1466→      size: u.size,
+  1467→      type: u.type,
+  1468→      category: u.category,
+  1469→      status: u.status,
+  1470→      uploadedAt: u.uploadedAt,
+  1471→      width: u.width,
+  1472→      height: u.height,
+  1473→      durationSec: u.durationSec,
+  1474→      pageCount: u.pageCount,
+  1475→      previewDataUrl: u.previewDataUrl,
+  1476→    })),
+  1477→    teamRequirements: {
+  1478→      roles: payload.teamRoles.map((r) => r.role),
+  1479→      permissions: payload.teamRoles.flatMap((r) => r.permissions),
+  1480→      approvalHierarchy: [],
+  1481→    },
+  1482→    workflow: payload.workflow as Record<string, never>,
+  1483→    status: "New",
+  1484→    priority,
+  1485→    assignedTeam: {},
+  1486→    proposal: null,
+  1487→    quotation: null,
+  1488→    notes: "",
+  1489→    timeline: [{ status: "New", timestamp: payload.submittedAt }],
+  1490→    srgSections,
+  1491→  };
+  1492→
+  1493→  if (existingIdx >= 0) {
+  1494→    // preserve admin-side metadata (status, team, proposal, quotation, notes, timeline)
+  1495→    const preserved = existing[existingIdx];
+  1496→    submission.status = preserved.status;
+  1497→    submission.priority = preserved.priority;
+  1498→    submission.assignedTeam = preserved.assignedTeam;
+  1499→    submission.proposal = preserved.proposal;
+  1500→    submission.quotation = preserved.quotation;
+  1501→    submission.notes = preserved.notes;
+  1502→    submission.timeline = preserved.timeline;
+  1503→    existing[existingIdx] = submission;
+  1504→    saveSubmissions(existing);
+  1505→  } else {
+  1506→    upsertSubmission(submission);
+  1507→    // Fire a notification
+  1508→    addNotification({
+  1509→      type: "submission",
+  1510→      title: "New submission received",
+  1511→      description: `${projectName} — ${payload.clientDetails.company}`,
+  1512→      submissionId: submission.id,
+  1513→    });
+  1514→  }
+  1515→
+  1516→  return submission;
+  1517→}
+  1518→
+  1519→function deriveProjectName(
+  1520→  payload: SrgSubmissionPayload,
+  1521→  templateName: string
+  1522→): string {
+  1523→  const company = payload.clientDetails.company;
+  1524→  // strip suffixes like "Pvt Ltd", "Inc", "LLP", etc.
+  1525→  const shortCompany = company
+  1526→    .replace(/\s+(Pvt\s+Ltd|Private\s+Limited|Inc|LLP|LLC|Ltd|Limited|Corp|Corporation|GmbH|S\.A\.|S\.r\.l)\.?$/i, "")
+  1527→    .trim();
+  1528→  return `${shortCompany || company || "New Project"} — ${templateName}`;
+  1529→}
+  1530→
+  1531→function detectPriority(payload: SrgSubmissionPayload): Priority {
+  1532→  const budget = payload.businessDetails.annualBudget;
+  1533→  const deadline = payload.projectGoals.deadline;
+  1534→  if (deadline === "asap") return "Critical";
+  1535→  if (budget === "above_150k" || budget === "50k_150k") return "High";
+  1536→  if (budget === "15k_50k") return "Medium";
+  1537→  return "Low";
+  1538→}
+  1539→
