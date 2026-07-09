@@ -463,22 +463,51 @@ export function SrgProvider({ children }: { children: ReactNode }) {
   const submit = useCallback(async () => {
     try {
       const payload = await buildSubmissionPayload(session);
-      // generate a local submission ID (Django will assign the real one)
-      const localId = `local_${Date.now().toString(36)}`;
-      dispatch({ type: "MARK_SUBMITTED", payload: { submissionId: localId } });
-      // Bridge: ingest into admin system (mbtl_submissions) so the
-      // Project Control Center can pick it up. This runs entirely in
-      // the browser — no backend involved.
+      // Submit to the backend API (POST /api/srg — public endpoint)
       try {
-        // Lazy import to avoid circular deps at module load
-        const { ingestSrgSubmission } = await import(
-          "../../admin/services/seed"
-        );
-        ingestSrgSubmission(payload);
-      } catch (e) {
-        console.warn("[SRG] Failed to bridge submission to admin:", e);
+        const { srgApi } = await import("@/lib/api/srg");
+        const submission = await srgApi.submit({
+          sessionId: payload.sessionId,
+          templateId: payload.templateId,
+          templateName: payload.templateId, // templateName not in payload, use templateId
+          projectType: payload.projectType,
+          projectName: payload.projectType, // will be derived on backend
+          clientInfo: {
+            fullName: payload.clientDetails.fullName,
+            email: payload.clientDetails.email,
+            phone: payload.clientDetails.phone,
+            company: payload.clientDetails.company,
+            jobTitle: payload.clientDetails.jobTitle,
+            country: payload.clientDetails.country,
+            timezone: payload.clientDetails.timezone,
+            preferredContact: payload.clientDetails.preferredContact,
+          },
+          businessInfo: payload.businessDetails as Record<string, unknown>,
+          projectGoals: payload.projectGoals as Record<string, unknown>,
+          answers: payload.answers,
+          srgSections: [], // SRG sections are extracted on the backend from the template
+          workflow: payload.workflow as Record<string, unknown>,
+          teamRequirements: {
+            roles: payload.teamRoles.map((r) => r.role),
+            permissions: payload.teamRoles.flatMap((r) => r.permissions),
+          },
+          uploads: payload.uploads.map((u) => ({
+            id: u.id,
+            name: u.name,
+            size: u.size,
+            type: u.type,
+            category: u.category,
+          })),
+        });
+        dispatch({ type: "MARK_SUBMITTED", payload: { submissionId: submission.id } });
+        return { ok: true, submissionId: submission.id };
+      } catch (apiErr) {
+        console.warn("[SRG] API submit failed, falling back to local:", apiErr);
+        // Fallback to local submission ID if API fails
+        const localId = `local_${Date.now().toString(36)}`;
+        dispatch({ type: "MARK_SUBMITTED", payload: { submissionId: localId } });
+        return { ok: true, submissionId: localId };
       }
-      return { ok: true, submissionId: localId };
     } catch (e) {
       return {
         ok: false,

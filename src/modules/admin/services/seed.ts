@@ -1343,56 +1343,12 @@ const SEED_ACTIVITIES: ActivityLog[] = [
 
 /* --------------------------- Seed runner --------------------------- */
 
+/**
+ * Phase 2: No seed data. The dashboard reads from the backend API.
+ * This function is kept for backward compatibility but does nothing.
+ */
 export function seedIfNeeded(): void {
-  if (typeof window === "undefined") return;
-  if (localStorage.getItem(SEED_FLAG)) return;
-  const existing = loadSubmissions();
-  if (existing.length === 0) {
-    saveSubmissions(SEED_SUBMISSIONS);
-    saveProjects(SEED_PROJECTS);
-    saveClients(SEED_CLIENTS);
-    saveInvoices(SEED_INVOICES);
-    saveMeetings(SEED_MEETINGS);
-    saveActivities(SEED_ACTIVITIES);
-    // Add welcome notifications
-    addNotification({
-      type: "submission",
-      title: "New submission received",
-      description: "Nova AI Legal Assistant — Critical priority",
-      submissionId: "sub_seed_nova_legal",
-    });
-    addNotification({
-      type: "quotation",
-      title: "Quotation accepted",
-      description: "Omni POS + Ordering Platform — $92,000",
-      submissionId: "sub_seed_omni_restaurant",
-    });
-    addNotification({
-      type: "proposal",
-      title: "Proposal sent",
-      description: "Zahra Foundation Portal — awaiting response",
-      submissionId: "sub_seed_zahra_trust",
-    });
-    addNotification({
-      type: "team",
-      title: "Team assigned",
-      description: "Helios ERP Modernization — 3 members assigned",
-      submissionId: "sub_seed_helios_erp",
-    });
-    addNotification({
-      type: "invoice",
-      title: "Invoice paid",
-      description: "INV-2025-001 paid by Omni F&B Group ($27,600)",
-      invoiceId: "inv_seed_1",
-    });
-    addNotification({
-      type: "meeting",
-      title: "Meeting reminder",
-      description: "Nova Legal — Discovery Call tomorrow at 10:00 AM",
-      submissionId: "sub_seed_nova_legal",
-    });
-  }
-  localStorage.setItem(SEED_FLAG, "1");
+  // No-op — all data comes from the backend API now.
 }
 
 /* --------------------------- SRG → Admin bridge --------------------------- */

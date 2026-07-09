@@ -1,23 +1,26 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminTopbar } from "./AdminTopbar";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Loader2 } from "lucide-react";
+import { tokenStorage } from "@/lib/api/client";
 
 const THEME_KEY = "mbtl_admin_theme";
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const isLoginPage = pathname === "/admin/login";
+  const [authChecked, setAuthChecked] = useState(isLoginPage);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">(() => {
     if (typeof window === "undefined") return "dark";
     return (localStorage.getItem(THEME_KEY) as "dark" | "light") ?? "dark";
   });
-
-  // Apply theme class to admin root
-  const themeClass = theme === "light" ? "admin-light" : "";
 
   const toggleTheme = useCallback(() => {
     setTheme((prev) => {
@@ -28,6 +31,32 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toggleCollapsed = useCallback(() => setCollapsed((v) => !v), []);
+
+  // Auth guard — redirect to /admin/login if no token (skip for login page)
+  useEffect(() => {
+    if (isLoginPage) return;
+    if (!tokenStorage.get()) {
+      router.replace("/admin/login");
+      return;
+    }
+    queueMicrotask(() => setAuthChecked(true));
+  }, [router, isLoginPage]);
+
+  // Apply theme class to admin root
+  const themeClass = theme === "light" ? "admin-light" : "";
+
+  // Login page renders without the shell
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
+
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0a0e1a" }}>
+        <Loader2 className="h-8 w-8 animate-spin text-cyan" />
+      </div>
+    );
+  }
 
   return (
     <div className={`admin-bg min-h-screen ${themeClass}`} style={{ color: "var(--admin-text)" }}>
