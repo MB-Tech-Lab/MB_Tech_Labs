@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -19,9 +19,14 @@ import {
   Calculator,
   Users,
   FolderKanban,
+  Inbox,
+  Calendar,
+  ListTodo,
+  Loader2,
 } from "lucide-react";
 import { useAdmin } from "../context/AdminContext";
 import { usePathname } from "next/navigation";
+import { searchApi, type SearchResult } from "@/lib/api/search";
 
 function timeAgo(ts: number): string {
   const diff = Date.now() - ts;
@@ -52,6 +57,43 @@ export function AdminTopbar({
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  // Debounced global search
+  const debouncedSearch = useCallback(async (query: string) => {
+    if (!query.trim() || query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    setSearchLoading(true);
+    try {
+      const results = await searchApi.search(query, 10);
+      setSearchResults(results);
+    } catch {
+      setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => debouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search, debouncedSearch]);
+
+  // Close search dropdown on outside click
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchFocused(false);
+      }
+    }
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const quickRef = useRef<HTMLDivElement>(null);
@@ -87,17 +129,18 @@ export function AdminTopbar({
         <Menu className="h-5 w-5" />
       </button>
 
-      {/* Search */}
-      <div className="relative flex-1 max-w-md">
+      {/* Global Search */}
+      <div ref={searchRef} className="relative flex-1 max-w-md">
         <Search
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4"
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 z-10"
           style={{ color: "var(--admin-text-muted)" }}
         />
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search clients, projects, submissions..."
+          onFocus={() => setSearchFocused(true)}
+          placeholder="Search clients, projects, SRGs, team, tasks..."
           className="w-full rounded-lg border pl-10 pr-3 py-2 text-[13px] focus:outline-none focus:ring-2 transition-all"
           style={{
             background: "var(--admin-surface-2)",
@@ -105,6 +148,79 @@ export function AdminTopbar({
             color: "var(--admin-text)",
           }}
         />
+        <AnimatePresence>
+          {searchFocused && search.length >= 2 && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="absolute top-full left-0 right-0 mt-2 rounded-xl border overflow-hidden z-50 max-h-96 overflow-y-auto"
+              style={{
+                background: "var(--admin-surface)",
+                borderColor: "var(--admin-border)",
+                boxShadow: "0 20px 60px -10px rgba(0,0,0,0.4)",
+              }}
+            >
+              {searchLoading ? (
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="h-5 w-5 animate-spin" style={{ color: "var(--admin-accent)" }} />
+                </div>
+              ) : searchResults.length === 0 ? (
+                <div className="px-4 py-6 text-center">
+                  <p className="text-[12.5px]" style={{ color: "var(--admin-text-muted)" }}>
+                    No results for "{search}"
+                  </p>
+                </div>
+              ) : (
+                <div className="py-1">
+                  {searchResults.map((result) => {
+                    const Icon = getSearchIcon(result.type);
+                    return (
+                      <Link
+                        key={`${result.type}-${result.id}`}
+                        href={result.href}
+                        onClick={() => {
+                          setSearchFocused(false);
+                          setSearch("");
+                        }}
+                        className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-opacity-50"
+                        style={{ background: "transparent" }}
+                      >
+                        <span
+                          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                          style={{
+                            background: "var(--admin-accent-bg)",
+                            color: "var(--admin-accent)",
+                          }}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-medium truncate" style={{ color: "var(--admin-text)" }}>
+                            {result.title}
+                          </p>
+                          <p className="text-[11px] truncate" style={{ color: "var(--admin-text-muted)" }}>
+                            {result.subtitle}
+                          </p>
+                        </div>
+                        <span
+                          className="text-[9.5px] uppercase tracking-wider shrink-0 rounded px-1.5 py-0.5"
+                          style={{
+                            background: "var(--admin-surface-2)",
+                            color: "var(--admin-text-muted)",
+                          }}
+                        >
+                          {result.type}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Quick actions */}
@@ -341,4 +457,18 @@ function Dropdown({ children }: { children: React.ReactNode }) {
       {children}
     </motion.div>
   );
+}
+
+function getSearchIcon(type: string) {
+  switch (type) {
+    case "client": return Users;
+    case "project": return FolderKanban;
+    case "srg": return Inbox;
+    case "team": return UserCircle;
+    case "meeting": return Calendar;
+    case "task": return ListTodo;
+    case "proposal": return FileText;
+    case "quotation": return Calculator;
+    default: return Search;
+  }
 }
