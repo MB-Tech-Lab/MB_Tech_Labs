@@ -18,6 +18,14 @@ export default function RefundCancellationPage() {
         ctaDescription: "If you're unsure about payment terms before starting, we're happy to walk you through the process — no surprises, ever.",
         ctaButtonText: "Contact Us",
         ctaHref: "/contact",
+        relatedTitle: "Related Policies",
+        relatedLinks: [
+          { label: "Privacy", href: "/privacy-policy" },
+          { label: "Terms", href: "/terms" },
+          { label: "Pricing", href: "/pricing-policy" },
+          { label: "Shipping", href: "/shipping-delivery" },
+          { label: "Contact", href: "/contact" },
+        ],
         sections: [
           {
             id: "custom-services",

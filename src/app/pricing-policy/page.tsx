@@ -14,10 +14,19 @@ export default function PricingPolicyPage() {
         subtitle:
           "MB Tech Labs builds custom software — not off-the-shelf products. There are no fixed prices. Every project is unique, and every quotation is tailored to your specific requirements, timeline, and complexity.",
         lastUpdated: "January 2025",
-        ctaTitle: "Ready for a Quote?",
-        ctaDescription: "Complete the Software Requirement Gathering (SRG) form and receive a detailed, no-obligation quotation within 3 business days.",
-        ctaButtonText: "Start Your Project",
+        ctaTitle: "Need a Custom Quote?",
+        ctaDescription:
+          "MB Tech Labs does not have fixed pricing. Every project receives a custom quotation after completing the Software Requirement Gathering (SRG).",
+        ctaButtonText: "Start Project",
         ctaHref: "/start-project",
+        ctaButtonText2: "Contact Sales",
+        ctaHref2: "/contact",
+        relatedTitle: "Related",
+        relatedLinks: [
+          { label: "Privacy", href: "/privacy-policy" },
+          { label: "Terms", href: "/terms" },
+          { label: "Refund", href: "/refund-cancellation" },
+        ],
         sections: [
           {
             id: "custom-pricing",

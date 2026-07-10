@@ -20,6 +20,11 @@ export interface LegalFAQ {
   answer: string;
 }
 
+export interface LegalRelatedLink {
+  label: string;
+  href: string;
+}
+
 export interface LegalPageData {
   eyebrow: string;
   title: string;
@@ -31,6 +36,10 @@ export interface LegalPageData {
   ctaDescription: string;
   ctaButtonText: string;
   ctaHref: string;
+  ctaHref2?: string;
+  ctaButtonText2?: string;
+  relatedTitle?: string;
+  relatedLinks?: LegalRelatedLink[];
 }
 
 export function LegalPageLayout({ data }: { data: LegalPageData }) {
@@ -194,13 +203,49 @@ export function LegalPageLayout({ data }: { data: LegalPageData }) {
             <p className="mt-4 text-[14px] text-white/60 max-w-md mx-auto">
               {data.ctaDescription}
             </p>
-            <Link
-              href={data.ctaHref}
-              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-cyan text-ink font-semibold text-[14px] px-6 py-3.5 hover:bg-cyan-soft transition-all hover:shadow-[0_10px_30px_-6px_rgba(37,214,255,0.6)]"
-            >
-              {data.ctaButtonText} <ArrowRight className="h-4 w-4" />
-            </Link>
+            <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                href={data.ctaHref}
+                className="inline-flex items-center gap-2 rounded-xl bg-cyan text-ink font-semibold text-[14px] px-6 py-3.5 hover:bg-cyan-soft transition-all hover:shadow-[0_10px_30px_-6px_rgba(37,214,255,0.6)]"
+              >
+                {data.ctaButtonText} <ArrowRight className="h-4 w-4" />
+              </Link>
+              {data.ctaButtonText2 && data.ctaHref2 && (
+                <Link
+                  href={data.ctaHref2}
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.03] text-white font-medium text-[14px] px-6 py-3.5 hover:bg-white/[0.07] hover:border-white/25 transition-all"
+                >
+                  {data.ctaButtonText2}
+                </Link>
+              )}
+            </div>
           </motion.div>
+
+          {/* Related Policies */}
+          {data.relatedLinks && data.relatedLinks.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="mt-8"
+            >
+              <h2 className="font-display text-[13px] font-semibold uppercase tracking-[0.15em] text-white/50 mb-4">
+                {data.relatedTitle || "Related Policies"}
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {data.relatedLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="rounded-lg border border-white/10 bg-white/[0.03] px-3.5 py-2 text-[12.5px] text-white/60 hover:text-cyan-soft hover:border-cyan/25 hover:bg-cyan/[0.04] transition-all"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
+          )}
         </div>
       </main>
       <Footer />

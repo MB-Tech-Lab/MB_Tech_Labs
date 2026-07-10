@@ -18,6 +18,14 @@ export default function TermsPage() {
         ctaDescription: "If you have questions about these terms before starting a project, we're happy to clarify. Reach out anytime.",
         ctaButtonText: "Contact Us",
         ctaHref: "/contact",
+        relatedTitle: "Related Documents",
+        relatedLinks: [
+          { label: "Privacy Policy", href: "/privacy-policy" },
+          { label: "Pricing Policy", href: "/pricing-policy" },
+          { label: "Refund Policy", href: "/refund-cancellation" },
+          { label: "Shipping Policy", href: "/shipping-delivery" },
+          { label: "Contact", href: "/contact" },
+        ],
         sections: [
           {
             id: "introduction",

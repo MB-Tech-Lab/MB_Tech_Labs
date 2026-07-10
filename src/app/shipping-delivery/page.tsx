@@ -18,6 +18,14 @@ export default function ShippingDeliveryPage() {
         ctaDescription: "Ready to build something real? Submit your requirements through our Project Discovery Portal and receive a detailed delivery timeline.",
         ctaButtonText: "Start Your Project",
         ctaHref: "/start-project",
+        relatedTitle: "Related Policies",
+        relatedLinks: [
+          { label: "Privacy", href: "/privacy-policy" },
+          { label: "Terms", href: "/terms" },
+          { label: "Refund", href: "/refund-cancellation" },
+          { label: "Pricing", href: "/pricing-policy" },
+          { label: "Contact", href: "/contact" },
+        ],
         sections: [
           {
             id: "digital-deliverables",

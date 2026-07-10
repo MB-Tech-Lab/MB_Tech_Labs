@@ -18,6 +18,14 @@ export default function PrivacyPolicyPage() {
         ctaDescription: "If you have concerns about your data or want to exercise your privacy rights, we're here to help.",
         ctaButtonText: "Contact Our Privacy Team",
         ctaHref: "/contact",
+        relatedTitle: "Related Policies",
+        relatedLinks: [
+          { label: "Terms & Conditions", href: "/terms" },
+          { label: "Pricing Policy", href: "/pricing-policy" },
+          { label: "Refund & Cancellation Policy", href: "/refund-cancellation" },
+          { label: "Shipping & Delivery Policy", href: "/shipping-delivery" },
+          { label: "Contact Us", href: "/contact" },
+        ],
         sections: [
           {
             id: "information-collected",
