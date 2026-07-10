@@ -14,8 +14,8 @@ import {
 /* ─── Section 2: Company ─── */
 const COMPANY_LINKS = [
   { label: "About", href: "/about" },
-  { label: "Projects", href: "/#portfolio" },
-  { label: "Process", href: "/#process" },
+  { label: "Projects", href: "/projects" },
+  { label: "Process", href: "/services" },
   { label: "Careers", href: "/careers" },
   { label: "Contact", href: "/contact" },
 ];
@@ -33,8 +33,8 @@ const SERVICE_LINKS = [
 /* ─── Section 4: Resources ─── */
 const RESOURCE_LINKS = [
   { label: "Technology Stack", href: "/technologies" },
-  { label: "Case Studies", href: "/#portfolio" },
-  { label: "Development Process", href: "/#process" },
+  { label: "Case Studies", href: "/projects" },
+  { label: "Development Process", href: "/services" },
   { label: "FAQ", href: "/#faq" },
   { label: "Blog", href: "#", comingSoon: true },
 ];

@@ -16,9 +16,7 @@ import {
   MapPin,
   Users,
   ArrowRight,
-  Loader2,
   Target,
-  Eye,
   Rocket,
   Users as UsersIcon,
   Award,
@@ -80,23 +78,28 @@ function formatDept(dept: string): string {
 export default function CareersPage() {
   const [positions, setPositions] = useState<InternshipPosition[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     careersApi.listPositions()
       .then((result) => {
+        if (cancelled) return;
         // Handle both array (public) and paginated (admin) responses
-        const data = Array.isArray(result) ? result : (result as { data: InternshipPosition[] }).data;
+        const data = Array.isArray(result) ? result : (result as { data: InternshipPosition[] })?.data;
         setPositions(data || []);
       })
       .catch(() => {
-        // API failed — treat as no positions
+        if (cancelled) return;
+        // API failed — treat as no positions, don't crash
         setPositions([]);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
   }, []);
 
-  const hasActivePositions = !loading && !error && positions.length > 0;
+  const hasActivePositions = !loading && positions.length > 0;
 
   return (
     <div className="relative min-h-screen flex flex-col">
@@ -332,8 +335,27 @@ export default function CareersPage() {
             </h2>
 
             {loading ? (
-              <div className="mt-10 flex items-center justify-center py-16">
-                <Loader2 className="h-8 w-8 animate-spin text-cyan" />
+              /* Loading state — skeleton cards */
+              <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="glass-panel rounded-2xl p-5 animate-pulse">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-2">
+                        <div className="h-5 w-20 rounded-md bg-white/10" />
+                        <div className="h-4 w-40 rounded bg-white/10" />
+                      </div>
+                      <div className="h-5 w-12 rounded-md bg-white/10" />
+                    </div>
+                    <div className="mt-4 space-y-2">
+                      <div className="h-3 w-24 rounded bg-white/8" />
+                      <div className="h-3 w-32 rounded bg-white/8" />
+                    </div>
+                    <div className="mt-4 flex justify-between">
+                      <div className="h-3 w-16 rounded bg-white/8" />
+                      <div className="h-3 w-20 rounded bg-white/8" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : hasActivePositions ? (
               /* State 2: Active Hiring */
