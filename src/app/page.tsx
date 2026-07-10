@@ -11,7 +11,7 @@ import { TechStack } from "@/components/mb-tech-labs/TechStack";
 import { FeaturedProjects } from "@/components/mb-tech-labs/FeaturedProjects";
 import { Process } from "@/components/mb-tech-labs/Process";
 import { Testimonials } from "@/components/mb-tech-labs/Testimonials";
-import { Pricing } from "@/components/mb-tech-labs/Pricing";
+import { ProjectEstimation } from "@/components/mb-tech-labs/ProjectEstimation";
 import { FAQ } from "@/components/mb-tech-labs/FAQ";
 import { CTA } from "@/components/mb-tech-labs/CTA";
 import { Footer } from "@/components/mb-tech-labs/Footer";
@@ -32,7 +32,7 @@ export default function Home() {
         <TechStack />
         <WhyChooseUs />
         <Testimonials />
-        <Pricing />
+        <ProjectEstimation />
         <FAQ />
         <Careers />
         <CTA />
