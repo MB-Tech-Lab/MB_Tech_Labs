@@ -6,16 +6,13 @@ import { Hero } from "@/components/mb-tech-labs/Hero";
 import { About } from "@/components/mb-tech-labs/About";
 import { Services } from "@/components/mb-tech-labs/Services";
 import { Industries } from "@/components/mb-tech-labs/Industries";
-import { WhyChooseUs } from "@/components/mb-tech-labs/WhyChooseUs";
-import { TechStack } from "@/components/mb-tech-labs/TechStack";
-import { FeaturedProjects } from "@/components/mb-tech-labs/FeaturedProjects";
 import { Process } from "@/components/mb-tech-labs/Process";
+import { WhyChooseUs } from "@/components/mb-tech-labs/WhyChooseUs";
 import { Testimonials } from "@/components/mb-tech-labs/Testimonials";
 import { ProjectEstimation } from "@/components/mb-tech-labs/ProjectEstimation";
 import { FAQ } from "@/components/mb-tech-labs/FAQ";
 import { CTA } from "@/components/mb-tech-labs/CTA";
 import { Footer } from "@/components/mb-tech-labs/Footer";
-import { Careers } from "@/components/mb-tech-labs/Careers";
 
 export default function Home() {
   return (
@@ -23,20 +20,28 @@ export default function Home() {
       <ShaderBackground />
       <FloatingNav />
       <main className="flex-1">
+        {/* 1. Hero */}
         <Hero />
+        {/* 2. About */}
         <About />
+        {/* 3. Services */}
         <Services />
+        {/* 4. Industries */}
         <Industries />
+        {/* 5. Development Process */}
         <Process />
-        <FeaturedProjects />
-        <TechStack />
+        {/* 6. Why Choose MB Tech Labs */}
         <WhyChooseUs />
-        <Testimonials />
+        {/* 7. Project Estimation Process */}
         <ProjectEstimation />
+        {/* 8. Testimonials */}
+        <Testimonials />
+        {/* 9. FAQ */}
         <FAQ />
-        <Careers />
+        {/* 10. Final CTA */}
         <CTA />
       </main>
+      {/* 11. Footer */}
       <Footer />
     </div>
   );

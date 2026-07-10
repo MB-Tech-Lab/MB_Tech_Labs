@@ -7,12 +7,11 @@ import Image from "next/image";
 
 const NAV_ITEMS = [
   { label: "Home", href: "#home" },
-  { label: "Services", href: "#services" },
-  { label: "Technologies", href: "#technologies" },
-  { label: "Portfolio", href: "#portfolio" },
-  { label: "About", href: "#about" },
+  { label: "Services", href: "/services" },
+  { label: "Projects", href: "/projects" },
+  { label: "About", href: "/about" },
   { label: "Careers", href: "/careers" },
-  { label: "Contact", href: "#contact" },
+  { label: "Contact", href: "/contact" },
 ];
 
 function useLiveTime() {

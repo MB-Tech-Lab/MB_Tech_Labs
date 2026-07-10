@@ -7,36 +7,28 @@ import { Section, SectionHeading, Reveal } from "./primitives";
 
 const FAQS = [
   {
-    q: "How long does a typical project take?",
-    a: "A focused MVP takes 8–12 weeks. Full enterprise platforms take 4–6 months. We ship in weekly sprints with demos every Friday, so you see progress continuously and can course-correct early. Complex ERP or AI-heavy systems may take longer — we'll give you an honest estimate after the discovery call.",
+    q: "Why don't you display fixed pricing?",
+    a: "Because every software project is unique. A 3-page marketing site and a multi-tenant ERP system require completely different engineering effort, technology, and team composition. Fixed pricing would mean overcharging simple projects and undercharging complex ones. Instead, we analyse your actual requirements through the SRG process and prepare a quotation based on real scope — not generic templates.",
   },
   {
-    q: "Do you work with startups or only enterprises?",
-    a: "Both. We've built MVPs for pre-revenue startups and modernized legacy systems for enterprises with 1000+ employees. Our engagement models flex to your stage — fixed-scope for MVPs, dedicated teams for scaling products, and milestone-based for enterprise modernizations.",
+    q: "How does the SRG process work?",
+    a: "The Software Requirement Gathering (SRG) is a 9-step online form that captures your business info, project type, goals, functional requirements, workflow, team access, uploads, and budget expectations. It takes 8–15 minutes. After submission, our team reviews it and prepares a detailed proposal with a custom quotation within 3–5 business days.",
   },
   {
-    q: "Who owns the source code and IP?",
-    a: "You do — 100%. All source code, designs, documentation, and infrastructure credentials are yours from day one. We hand over a private Git repository at project kickoff and never lock you into our tooling. We're happy to sign an NDA before any technical discussion.",
+    q: "How long does project estimation take?",
+    a: "After you submit the SRG form, our team reviews it within 1–2 business days. A detailed proposal with a custom quotation is typically delivered within 3–5 business days. Complex enterprise projects may take up to a week for thorough technical analysis.",
   },
   {
-    q: "What happens after launch?",
-    a: "We offer optional maintenance and support plans (SLA-backed) covering bug fixes, security patches, dependency upgrades, and performance tuning. Most clients stay with us for 6–12 months post-launch, then transition to their own team with our help. We never hold your system hostage.",
+    q: "Do you build custom software?",
+    a: "Yes — that's all we do. We don't sell templates, pre-built packages, or SaaS subscriptions. Every project is built from scratch according to your specific business requirements. Whether it's a web app, mobile app, ERP, CRM, or AI solution, the software is engineered around your workflow.",
   },
   {
-    q: "Can you integrate with our existing systems?",
-    a: "Yes — we've integrated with Salesforce, SAP, Tally, custom PHP backends, legacy on-prem databases, and everything in between. We use a clean API-first approach so new systems talk to old ones without rip-and-replace. During the SRG (Software Requirement Gathering), we map every integration point.",
+    q: "Can requirements change later?",
+    a: "Yes. We expect scope to evolve as the project progresses. Changes are handled through a structured change-request process: you describe the change, we assess the impact on cost and timeline, and you approve before work begins. No silent scope creep, no surprise invoices.",
   },
   {
-    q: "Do you sign NDAs and handle sensitive data?",
-    a: "Absolutely. We sign mutual NDAs before any technical discussion. Our team is trained on DPDP, GDPR, HIPAA, and ISO 27001 practices. All client data is encrypted in transit and at rest. We can deploy on your cloud, your on-prem, or our managed infrastructure — your choice.",
-  },
-  {
-    q: "What if I'm not technical? Will I understand what's happening?",
-    a: "Yes. We translate engineering into business outcomes. You get weekly demos in plain English, a shared roadmap you can read, and direct access to the project lead. No jargon, no black boxes. If something is risky or delayed, you'll hear it from us first — not discover it later.",
-  },
-  {
-    q: "How do you handle changes in scope?",
-    a: "We expect scope to evolve — that's normal. We use a structured change-request process: you describe the change, we assess impact (cost, timeline, risk), and you approve before we start. No silent scope creep, no surprise invoices. Everything is documented in your project workspace.",
+    q: "How do I get started?",
+    a: "Click 'Start Your Project' anywhere on our website and complete the Software Requirement Gathering (SRG) form. It takes 8–15 minutes. After that, our team will review your requirements and prepare a customised proposal and quotation. No payment is required until you approve the proposal and sign the project agreement.",
   },
 ];
 
