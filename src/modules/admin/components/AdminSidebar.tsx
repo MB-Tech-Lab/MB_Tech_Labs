@@ -23,6 +23,7 @@ import {
   Sparkles,
   Search,
   UserCircle,
+  GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAdmin } from "../context/AdminContext";
@@ -32,6 +33,7 @@ const NAV_ITEMS = [
   { label: "SRG Submissions", href: "/admin/submissions", icon: Inbox },
   { label: "Clients", href: "/admin/clients", icon: Users },
   { label: "Projects", href: "/admin/projects", icon: FolderKanban },
+  { label: "Talent", href: "/admin/talent", icon: GraduationCap },
   { label: "Proposals", href: "/admin/proposals", icon: FileText },
   { label: "Quotations", href: "/admin/quotations", icon: Calculator },
   { label: "Invoices", href: "/admin/invoices", icon: Receipt },

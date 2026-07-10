@@ -11,6 +11,28 @@ import { z } from "zod";
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
+
+    // If authenticated (admin), return all positions including drafts
+    let isAuthenticated = false;
+    try {
+      requireAuth(req);
+      isAuthenticated = true;
+    } catch {
+      // Not authenticated — public access
+    }
+
+    if (isAuthenticated) {
+      const result = await positionService.list({
+        page: parseInt(url.searchParams.get("page") || "1"),
+        pageSize: parseInt(url.searchParams.get("pageSize") || "100"),
+        search: url.searchParams.get("search") || undefined,
+        status: url.searchParams.get("status") || undefined,
+        department: url.searchParams.get("department") || undefined,
+      });
+      return apiResponse(result);
+    }
+
+    // Public — only published positions
     const positions = await positionService.listPublic({
       search: url.searchParams.get("search") || undefined,
       department: url.searchParams.get("department") || undefined,
