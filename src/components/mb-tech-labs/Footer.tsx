@@ -122,25 +122,21 @@ export function Footer() {
           <p className="text-[12.5px] text-white/45">
             © {new Date().getFullYear()} MB Tech Labs. All rights reserved.
           </p>
-          <div className="flex items-center gap-6">
-            <a
-              href="#"
-              className="text-[12.5px] text-white/45 hover:text-white/70 transition-colors"
-            >
-              Privacy Policy
-            </a>
-            <a
-              href="#"
-              className="text-[12.5px] text-white/45 hover:text-white/70 transition-colors"
-            >
-              Terms of Service
-            </a>
-            <a
-              href="#home"
-              className="inline-flex items-center gap-1 text-[12.5px] text-cyan-soft hover:text-cyan transition-colors"
-            >
-              Back to top
-              <ArrowUpRight className="h-3 w-3" />
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            <a href="/privacy-policy" className="text-[12px] text-white/45 hover:text-white/70 transition-colors">Privacy Policy</a>
+            <span className="text-white/20">·</span>
+            <a href="/terms" className="text-[12px] text-white/45 hover:text-white/70 transition-colors">Terms & Conditions</a>
+            <span className="text-white/20">·</span>
+            <a href="/pricing-policy" className="text-[12px] text-white/45 hover:text-white/70 transition-colors">Pricing Policy</a>
+            <span className="text-white/20">·</span>
+            <a href="/refund-cancellation" className="text-[12px] text-white/45 hover:text-white/70 transition-colors">Refund & Cancellation</a>
+            <span className="text-white/20">·</span>
+            <a href="/shipping-delivery" className="text-[12px] text-white/45 hover:text-white/70 transition-colors">Shipping & Delivery</a>
+            <span className="text-white/20">·</span>
+            <a href="/contact" className="text-[12px] text-white/45 hover:text-white/70 transition-colors">Contact</a>
+            <span className="text-white/20">·</span>
+            <a href="#home" className="inline-flex items-center gap-1 text-[12px] text-cyan-soft hover:text-cyan transition-colors">
+              Back to top <ArrowUpRight className="h-3 w-3" />
             </a>
           </div>
         </div>
