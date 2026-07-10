@@ -46,6 +46,16 @@ model User {
   createdTasks      Task[]         @relation("TaskCreatedBy")
   assignedTasks     Task[]         @relation("TaskAssignee")
   uploadedDocuments Document[]
+  // TAIMS relations
+  createdPositions     InternshipPosition[] @relation("PositionCreatedBy")
+  reviewedApplications Application[]        @relation("ApplicationReviewedBy")
+  techReviews          TechnicalReview[]    @relation("TechReviewer")
+  conductedInterviews  Interview[]          @relation("Interviewer")
+  interviewFeedback    InterviewFeedback[]  @relation("FeedbackProvider")
+  recruitmentNotes     RecruitmentNote[]    @relation("NoteAuthor")
+  mentoredBatches      TrainingBatch[]      @relation("BatchMentor")
+  mentoredTrainees     TrainingRecord[]     @relation("TraineeMentor")
+  issuedCertificates   Certificate[]        @relation("CertIssuer")
 
   @@map("users")
 }
@@ -508,4 +518,309 @@ model Service {
   createdAt   DateTime @default(now())
 
   @@map("services")
+}
+
+// ─────────────────────────────────────────────────────────────
+// TAIMS — Talent Acquisition & Internship Management System
+// ─────────────────────────────────────────────────────────────
+
+model InternshipPosition {
+  id              String   @id @default(cuid())
+  title           String
+  slug            String   @unique
+  department      String   // FRONTEND, BACKEND, FULLSTACK, AI, UI_UX, QA, DEVOPS, BA
+  technology      String?  // comma-separated: React,Node,PostgreSQL
+  duration        String   // e.g. "3 months", "6 months"
+  stipend         String?  // e.g. "₹10,000/month", "Unpaid"
+  mode            String   @default("REMOTE") // REMOTE, ONSITE, HYBRID
+  location        String?  // e.g. "Mumbai, India"
+  openings        Int      @default(1)
+  status          String   @default("DRAFT") // DRAFT, PUBLISHED, PAUSED, ARCHIVED
+  description     String
+  responsibilities String? // JSON array
+  skillsRequired  String?  // JSON array
+  eligibility     String?  // JSON array
+  techStack       String?  // JSON array
+  benefits        String?  // JSON array
+  learningOutcome String?
+  selectionProcess String? // JSON array
+  applicationDeadline DateTime?
+  createdBy       User?    @relation("PositionCreatedBy", fields: [createdById], references: [id])
+  createdById     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  applications    Application[]
+
+  @@map("internship_positions")
+}
+
+model Candidate {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String
+  phone         String?
+  dateOfBirth   DateTime?
+  gender        String?
+  city          String?
+  state         String?
+  country       String?
+  // Education
+  college       String?
+  university    String?
+  degree        String?
+  branch        String?
+  cgpa          Float?
+  currentSemester Int?
+  graduationYear  Int?
+  // Technical
+  skills        String?  // JSON array
+  // Portfolio
+  portfolioWebsite String?
+  githubProfile String?
+  linkedinProfile String?
+  resumePath    String?  // file path
+  // Essay answers
+  whyJoin       String?
+  techInterest  String?
+  bestProject   String?
+  careerGoals   String?
+  // Metadata
+  source        String   @default("WEBSITE") // WEBSITE, LINKEDIN, REFERRAL
+  status        String   @default("ACTIVE") // ACTIVE, CONVERTED, REJECTED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  applications  Application[]
+  projects      CandidateProject[]
+  hackathons    CandidateHackathon[]
+  certificates  Certificate[]
+  technicalReviews TechnicalReview[]
+  interviews    Interview[]
+  notes         RecruitmentNote[]
+  activities    RecruitmentActivity[]
+  trainingRecords TrainingRecord[]
+
+  @@map("candidates")
+}
+
+model Application {
+  id            String   @id @default(cuid())
+  candidate     Candidate @relation(fields: [candidateId], references: [id])
+  candidateId   String
+  position      InternshipPosition @relation(fields: [positionId], references: [id])
+  positionId    String
+  status        String   @default("APPLIED") // APPLIED, RESUME_REVIEWED, PROJECT_REVIEWED, TECHNICAL_DISCUSSION, SELECTED, OFFER_SENT, JOINED, TRAINING, COMPLETED, REJECTED
+  // Scorecard (0-100)
+  scoreProgramming  Int @default(0) // /30
+  scoreProjects     Int @default(0) // /25
+  scoreHackathons   Int @default(0) // /15
+  scoreGithub       Int @default(0) // /10
+  scoreCommunication Int @default(0) // /10
+  scoreAttitude     Int @default(0) // /10
+  totalScore        Int @default(0)
+  // Metadata
+  appliedAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  reviewedBy    User?    @relation("ApplicationReviewedBy", fields: [reviewedById], references: [id])
+  reviewedById  String?
+
+  notes         RecruitmentNote[]
+  activities    RecruitmentActivity[]
+  technicalReviews TechnicalReview[]
+  interviews    Interview[]
+  certificates  Certificate[]
+  trainingRecords TrainingRecord[]
+
+  @@map("applications")
+}
+
+model CandidateProject {
+  id            String   @id @default(cuid())
+  candidate     Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId   String
+  name          String
+  description   String?
+  technology    String?  // comma-separated
+  githubUrl     String?
+  liveDemoUrl   String?
+  role          String?
+  achievements  String?
+  screenshotPath String?
+  createdAt     DateTime @default(now())
+
+  @@map("candidate_projects")
+}
+
+model CandidateHackathon {
+  id            String   @id @default(cuid())
+  candidate     Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId   String
+  name          String
+  year          Int?
+  rank          String?
+  certificatePath String?
+  repositoryUrl String?
+  createdAt     DateTime @default(now())
+
+  @@map("candidate_hackathons")
+}
+
+model TechnicalReview {
+  id            String   @id @default(cuid())
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  applicationId String
+  candidate     Candidate @relation(fields: [candidateId], references: [id])
+  candidateId   String
+  reviewer      User?    @relation("TechReviewer", fields: [reviewerId], references: [id])
+  reviewerId    String?
+  // Review scores
+  codingSkills     Int @default(0) // /10
+  problemSolving   Int @default(0) // /10
+  systemDesign     Int @default(0) // /10
+  communication    Int @default(0) // /10
+  learningAbility  Int @default(0) // /10
+  overallRating    Int @default(0) // /50
+  feedback     String?
+  recommendation String? // STRONG_HIRE, HIRE, NO_HIRE
+  createdAt    DateTime @default(now())
+
+  @@map("technical_reviews")
+}
+
+model Interview {
+  id            String   @id @default(cuid())
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  applicationId String
+  candidate     Candidate @relation(fields: [candidateId], references: [id])
+  candidateId   String
+  type          String   @default("TECHNICAL") // TECHNICAL, HR, FINAL
+  status        String   @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED, NO_SHOW
+  scheduledAt   DateTime
+  duration      Int      @default(60) // minutes
+  location      String?
+  meetingUrl    String?
+  interviewer   User?    @relation("Interviewer", fields: [interviewerId], references: [id])
+  interviewerId String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  feedback      InterviewFeedback[]
+
+  @@map("interviews")
+}
+
+model InterviewFeedback {
+  id            String   @id @default(cuid())
+  interview     Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  interviewId   String
+  providedBy    User?    @relation("FeedbackProvider", fields: [providedById], references: [id])
+  providedById  String?
+  rating        Int @default(0) // /10
+  strengths     String?
+  weaknesses    String?
+  recommendation String? // STRONG_HIRE, HIRE, NO_HIRE
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  @@map("interview_feedback")
+}
+
+model RecruitmentNote {
+  id            String   @id @default(cuid())
+  application   Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  applicationId String?
+  candidate     Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId   String
+  content       String
+  author        User?    @relation("NoteAuthor", fields: [authorId], references: [id])
+  authorId      String?
+  createdAt     DateTime @default(now())
+
+  @@map("recruitment_notes")
+}
+
+model RecruitmentActivity {
+  id            String   @id @default(cuid())
+  application   Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  applicationId String?
+  candidate     Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId   String
+  action        String   // STATUS_CHANGE, NOTE_ADDED, REVIEW_COMPLETED, INTERVIEW_SCHEDULED
+  description   String
+  metadata      String?  // JSON
+  createdAt     DateTime @default(now())
+
+  @@map("recruitment_activities")
+}
+
+model TrainingBatch {
+  id            String   @id @default(cuid())
+  name          String
+  startDate     DateTime
+  endDate       DateTime?
+  mentor        User?    @relation("BatchMentor", fields: [mentorId], references: [id])
+  mentorId      String?
+  status        String   @default("ACTIVE") // ACTIVE, COMPLETED, CANCELLED
+  createdAt     DateTime @default(now())
+
+  trainingRecords TrainingRecord[]
+  trainingTasks   TrainingTask[]
+
+  @@map("training_batches")
+}
+
+model TrainingTask {
+  id            String   @id @default(cuid())
+  batch         TrainingBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  batchId       String
+  title         String
+  description   String?
+  week          Int
+  type          String   @default("LEARNING") // LEARNING, PROJECT, ASSIGNMENT, REVIEW
+  status        String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
+  createdAt     DateTime @default(now())
+
+  @@map("training_tasks")
+}
+
+model TrainingRecord {
+  id            String   @id @default(cuid())
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  applicationId String
+  candidate     Candidate @relation(fields: [candidateId], references: [id])
+  candidateId   String
+  batch         TrainingBatch? @relation(fields: [batchId], references: [id])
+  batchId       String?
+  mentor        User?    @relation("TraineeMentor", fields: [mentorId], references: [id])
+  mentorId      String?
+  status        String   @default("ORIENTATION") // ORIENTATION, TRAINING, INTERNAL_PROJECT, CLIENT_PROJECT, EVALUATION, COMPLETED
+  progress      Int      @default(0) // 0-100
+  startDate     DateTime @default(now())
+  endDate       DateTime?
+  weeklyGoals   String?  // JSON
+  performance   String?  // EXCELLENT, GOOD, AVERAGE, NEEDS_IMPROVEMENT
+  attendance    Int      @default(100) // percentage
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("training_records")
+}
+
+model Certificate {
+  id            String   @id @default(cuid())
+  candidate     Candidate @relation(fields: [candidateId], references: [id])
+  candidateId   String
+  application   Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  applicationId String?
+  type          String   // COMPLETION, PERFORMANCE, RECOMMENDATION
+  title         String
+  description   String?
+  issuedAt      DateTime @default(now())
+  issuedBy      User?    @relation("CertIssuer", fields: [issuedById], references: [id])
+  issuedById    String?
+  certificateNumber String @unique
+  createdAt     DateTime @default(now())
+
+  @@map("certificates")
 }

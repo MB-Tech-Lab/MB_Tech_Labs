@@ -1,0 +1,40 @@
+/**
+ * GET /api/careers/positions/:id — public detail (any status)
+ * PUT /api/careers/positions/:id — admin update
+ * DELETE /api/careers/positions/:id — admin delete
+ */
+import { NextRequest } from "next/server";
+import { positionService } from "@/modules/backend/services/InternshipPositionService";
+import { requireAuth } from "@/modules/backend/middlewares/auth";
+import { apiResponse, apiError } from "@/modules/backend/utils/ApiError";
+
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    return apiResponse(await positionService.getById(id));
+  } catch (err) {
+    return apiError(err);
+  }
+}
+
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    requireAuth(req);
+    const { id } = await params;
+    const body = await req.json();
+    return apiResponse(await positionService.update(id, body));
+  } catch (err) {
+    return apiError(err);
+  }
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    requireAuth(req);
+    const { id } = await params;
+    await positionService.delete(id);
+    return apiResponse({ id });
+  } catch (err) {
+    return apiError(err);
+  }
+}
