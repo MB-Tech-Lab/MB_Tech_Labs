@@ -9,26 +9,28 @@ import {
   Code2,
   Trophy,
   Github,
-  Users,
-  MapPin,
+  Heart,
+  Briefcase,
   Clock,
   DollarSign,
+  MapPin,
+  Users,
   ArrowRight,
-  Search,
   Loader2,
-  CheckCircle2,
   Target,
-  Heart,
+  Eye,
   Rocket,
+  Users as UsersIcon,
   Award,
-  Briefcase,
+  Linkedin,
+  Instagram,
+  Mail,
+  CheckCircle2,
 } from "lucide-react";
 import { ShaderBackground } from "@/components/mb-tech-labs/ShaderBackground";
 import { FloatingNav } from "@/components/mb-tech-labs/FloatingNav";
 import { Footer } from "@/components/mb-tech-labs/Footer";
 import { careersApi, type InternshipPosition } from "@/lib/api/careers";
-
-const DEPARTMENTS = ["All", "FRONTEND", "BACKEND", "FULLSTACK", "AI", "UI_UX", "QA", "DEVOPS", "BA"];
 
 const ELIGIBILITY = [
   { icon: GraduationCap, label: "Final Year Students" },
@@ -78,15 +80,23 @@ function formatDept(dept: string): string {
 export default function CareersPage() {
   const [positions, setPositions] = useState<InternshipPosition[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [deptFilter, setDeptFilter] = useState("All");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    careersApi.listPositions({ search: search || undefined, department: deptFilter === "All" ? undefined : deptFilter })
-      .then(setPositions)
-      .catch(() => setPositions([]))
+    careersApi.listPositions()
+      .then((result) => {
+        // Handle both array (public) and paginated (admin) responses
+        const data = Array.isArray(result) ? result : (result as { data: InternshipPosition[] }).data;
+        setPositions(data || []);
+      })
+      .catch(() => {
+        // API failed — treat as no positions
+        setPositions([]);
+      })
       .finally(() => setLoading(false));
-  }, [search, deptFilter]);
+  }, []);
+
+  const hasActivePositions = !loading && !error && positions.length > 0;
 
   return (
     <div className="relative min-h-screen flex flex-col">
@@ -103,7 +113,7 @@ export default function CareersPage() {
           >
             <span className="inline-flex items-center gap-2 rounded-full border border-cyan/25 bg-cyan/[0.06] px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.22em] text-cyan-soft">
               <Sparkles className="h-3.5 w-3.5 text-cyan" />
-              Careers at MB Tech Labs
+              Internship & Graduate Program
             </span>
             <h1 className="mt-6 font-display font-semibold text-white tracking-[-0.025em] text-[36px] sm:text-5xl md:text-[64px] md:leading-[1.05]">
               Start Your{" "}
@@ -116,9 +126,15 @@ export default function CareersPage() {
               real client software, MB Tech Labs is the right place to begin your career.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <a href="#openings" className="inline-flex items-center gap-2 rounded-xl bg-cyan text-ink font-semibold text-[14.5px] px-6 py-3.5 hover:bg-cyan-soft transition-all">
-                View Internship Openings <ArrowRight className="h-4 w-4" />
-              </a>
+              {hasActivePositions ? (
+                <a href="#openings" className="inline-flex items-center gap-2 rounded-xl bg-cyan text-ink font-semibold text-[14.5px] px-6 py-3.5 hover:bg-cyan-soft transition-all">
+                  View Internship Openings <ArrowRight className="h-4 w-4" />
+                </a>
+              ) : (
+                <a href="#stay-connected" className="inline-flex items-center gap-2 rounded-xl bg-cyan text-ink font-semibold text-[14.5px] px-6 py-3.5 hover:bg-cyan-soft transition-all">
+                  Stay Connected <ArrowRight className="h-4 w-4" />
+                </a>
+              )}
               <a href="#learning" className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.03] text-white font-medium text-[14.5px] px-6 py-3.5 hover:bg-white/[0.07] transition-all">
                 Explore Learning Journey
               </a>
@@ -141,7 +157,7 @@ export default function CareersPage() {
                 { icon: Target, title: "We train future engineers", desc: "You don't need to know everything on day one. We teach you the stack, the patterns, and the standards." },
                 { icon: Code2, title: "Practical experience > resumes", desc: "A GitHub with 3 real projects beats a resume with 3 internships. We look at what you've built, not where you've been." },
                 { icon: Rocket, title: "Real client products", desc: "Every intern ships code to production. You'll work on software that real businesses depend on from month 2." },
-                { icon: Users, title: "Mentor for every intern", desc: "You're assigned a senior engineer who reviews your code daily and unblocks you within minutes, not days." },
+                { icon: UsersIcon, title: "Mentor for every intern", desc: "You're assigned a senior engineer who reviews your code daily and unblocks you within minutes, not days." },
               ].map((item, i) => {
                 const Icon = item.icon;
                 return (
@@ -302,7 +318,7 @@ export default function CareersPage() {
             </div>
           </motion.div>
 
-          {/* OPEN POSITIONS */}
+          {/* OPEN POSITIONS — State 1 (No Active Hiring) or State 2 (Active Hiring) */}
           <motion.div
             id="openings"
             initial={{ opacity: 0, y: 24 }}
@@ -315,50 +331,13 @@ export default function CareersPage() {
               Open <span className="text-gradient-cyan">Positions</span>
             </h2>
 
-            {/* Search + Filter */}
-            <div className="mt-8 flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto">
-              <div className="relative flex-1">
-                <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/40" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search positions..."
-                  className="w-full rounded-xl bg-white/[0.04] border border-white/10 pl-10 pr-4 py-2.5 text-[13px] text-white placeholder:text-white/30 focus:outline-none focus:border-cyan/40 focus:ring-2 focus:ring-cyan/15 transition-all"
-                />
-              </div>
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-                {DEPARTMENTS.map((d) => (
-                  <button
-                    key={d}
-                    onClick={() => setDeptFilter(d)}
-                    className={`shrink-0 rounded-full border px-3 py-1.5 text-[11.5px] font-medium transition-all ${
-                      deptFilter === d
-                        ? "bg-cyan/15 border-cyan/40 text-white"
-                        : "bg-white/[0.03] border-white/10 text-white/55 hover:border-white/20"
-                    }`}
-                  >
-                    {d === "All" ? "All" : formatDept(d)}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Positions */}
             {loading ? (
               <div className="mt-10 flex items-center justify-center py-16">
                 <Loader2 className="h-8 w-8 animate-spin text-cyan" />
               </div>
-            ) : positions.length === 0 ? (
-              <div className="mt-10 glass-panel rounded-2xl py-16 text-center max-w-2xl mx-auto">
-                <Briefcase className="h-10 w-10 text-white/30 mx-auto mb-4" />
-                <h3 className="font-display text-[16px] font-semibold text-white">No open positions right now</h3>
-                <p className="mt-2 text-[13px] text-white/50 max-w-sm mx-auto">
-                  We're not actively hiring interns at the moment. Check back soon or send your resume to careers@mbtechlabs.com.
-                </p>
-              </div>
-            ) : (
-              <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            ) : hasActivePositions ? (
+              /* State 2: Active Hiring */
+              <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {positions.map((pos, i) => (
                   <motion.div
                     key={pos.id}
@@ -402,6 +381,56 @@ export default function CareersPage() {
                   </motion.div>
                 ))}
               </div>
+            ) : (
+              /* State 1: No Active Hiring */
+              <div id="stay-connected" className="mt-10 glass-panel-strong rounded-2xl p-8 sm:p-12 text-center max-w-2xl mx-auto">
+                <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan/10 border border-cyan/25 text-cyan mx-auto">
+                  <GraduationCap className="h-7 w-7" />
+                </span>
+                <h3 className="mt-6 font-display text-xl font-semibold text-white">
+                  We're not actively hiring right now
+                </h3>
+                <p className="mt-3 text-[14px] text-white/55 leading-relaxed max-w-md mx-auto">
+                  We'd love to stay connected. Follow MB Tech Labs to be notified
+                  when new internship opportunities open.
+                </p>
+                <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+                  <a
+                    href="https://linkedin.com/company/mbtechlabs"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-xl bg-cyan text-ink font-semibold text-[13px] px-5 py-2.5 hover:bg-cyan-soft transition-all"
+                  >
+                    <Linkedin className="h-4 w-4" />
+                    Follow on LinkedIn
+                  </a>
+                  <a
+                    href="https://instagram.com/mbtechlabs"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.03] text-white font-medium text-[13px] px-5 py-2.5 hover:bg-white/[0.07] transition-all"
+                  >
+                    <Instagram className="h-4 w-4 text-cyan" />
+                    Follow on Instagram
+                  </a>
+                  <a
+                    href="https://github.com/mbtechlabs"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.03] text-white font-medium text-[13px] px-5 py-2.5 hover:bg-white/[0.07] transition-all"
+                  >
+                    <Github className="h-4 w-4 text-cyan" />
+                    View GitHub
+                  </a>
+                </div>
+                <a
+                  href="mailto:careers@mbtechlabs.com?subject=Subscribe for internship updates"
+                  className="mt-3 inline-flex items-center gap-2 text-[12.5px] text-cyan-soft/70 hover:text-cyan transition-colors"
+                >
+                  <Mail className="h-3.5 w-3.5" />
+                  Subscribe for Updates
+                </a>
+              </div>
             )}
           </motion.div>
 
@@ -411,20 +440,29 @@ export default function CareersPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
-            className="mt-24 glass-panel-strong rounded-2xl p-8 sm:p-12 text-center max-w-3xl mx-auto"
+            className="mt-24 glass-panel-strong rounded-2xl p-8 text-center max-w-3xl mx-auto"
           >
             <h2 className="font-display text-2xl sm:text-3xl font-semibold text-white">
-              Ready to start your engineering journey?
+              "We don't hire experience. We build experience."
             </h2>
             <p className="mt-3 text-[14px] text-white/55 max-w-md mx-auto">
-              Don't wait for the "perfect" moment. If you love building things, apply now.
+              Don't wait for the "perfect" moment. If you love building things, apply when positions open.
             </p>
-            <a
-              href="#openings"
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-cyan text-ink font-semibold text-[14px] px-6 py-3.5 hover:bg-cyan-soft transition-all"
-            >
-              Browse Open Positions <ArrowRight className="h-4 w-4" />
-            </a>
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+              {hasActivePositions ? (
+                <a href="#openings" className="inline-flex items-center gap-2 rounded-xl bg-cyan text-ink font-semibold text-[14px] px-6 py-3.5 hover:bg-cyan-soft transition-all">
+                  Browse Open Positions <ArrowRight className="h-4 w-4" />
+                </a>
+              ) : (
+                <a href="https://linkedin.com/company/mbtechlabs" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-cyan text-ink font-semibold text-[14px] px-6 py-3.5 hover:bg-cyan-soft transition-all">
+                  <Linkedin className="h-4 w-4" />
+                  Follow MB Tech Labs
+                </a>
+              )}
+              <Link href="/contact" className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.03] text-white font-medium text-[14px] px-6 py-3.5 hover:bg-white/[0.07] transition-all">
+                Contact Us
+              </Link>
+            </div>
           </motion.div>
         </div>
       </main>
