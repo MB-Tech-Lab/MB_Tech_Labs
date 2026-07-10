@@ -1,307 +1,180 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import {
-  FolderKanban,
-  ArrowRight,
-  Plus,
-  Code2,
-  Calendar,
-  Users,
-  Filter,
-} from "lucide-react";
-import { useAdmin } from "@/modules/admin/context/AdminContext";
+import { FolderKanban, Search, ArrowRight, Plus, Filter } from "lucide-react";
 import {
   AdminCard,
-  AdminButton,
-  DevStatusBadge,
-  PriorityBadge,
   PageTransition,
-  PageHeader,
   EmptyState,
-  ProgressBar,
-  Avatar,
+  Skeleton,
+  PageHeader,
+  DevStatusBadge,
 } from "@/modules/admin/components/ui";
-import type { DevProjectStatus } from "@/modules/admin/types";
+import { projectsApi, type Project } from "@/lib/api/projects";
 
-const FILTERS: { label: string; value: string }[] = [
-  { label: "All Projects", value: "all" },
-  { label: "Active Stages", value: "active" },
-  { label: "Maintenance", value: "maintenance" },
+const FILTERS = [
+  { label: "All", value: "" },
+  { label: "Discovery", value: "DISCOVERY" },
+  { label: "Planning", value: "PLANNING" },
+  { label: "Development", value: "DEVELOPMENT" },
+  { label: "Testing", value: "TESTING" },
+  { label: "Deployment", value: "DEPLOYMENT" },
+  { label: "Maintenance", value: "MAINTENANCE" },
 ];
 
-const ACTIVE_STAGES: DevProjectStatus[] = [
-  "Discovery",
-  "Planning",
-  "UI/UX",
-  "Development",
-  "Testing",
-  "Deployment",
-];
-
-function formatDate(ts: number): string {
-  return new Date(ts).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+function formatDate(ts: string): string {
+  return new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 export default function ProjectsPage() {
-  const { projects, teamMembers } = useAdmin();
-  const [filter, setFilter] = useState("all");
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("");
 
-  const filtered = useMemo(() => {
-    if (filter === "active") {
-      return projects.filter((p) => ACTIVE_STAGES.includes(p.status));
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await projectsApi.list({
+          search: search || undefined,
+          status: filter || undefined,
+          pageSize: 100,
+        });
+        setProjects(result.data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load projects");
+      } finally {
+        setLoading(false);
+      }
     }
-    if (filter === "maintenance") {
-      return projects.filter(
-        (p) => p.status === "Maintenance" || p.status === "On Hold"
-      );
-    }
-    return projects;
-  }, [projects, filter]);
+    load();
+  }, [search, filter]);
 
   return (
     <PageTransition>
       <PageHeader
         title="Projects"
-        description={`${projects.length} project${projects.length === 1 ? "" : "s"} in delivery`}
+        description="Active software development projects"
         action={
-          <Link href="/admin/submissions">
-            <AdminButton variant="primary" size="md" icon={<Plus className="h-4 w-4" />}>
-              Create Project
-            </AdminButton>
-          </Link>
+          <button className="inline-flex items-center gap-1.5 rounded-xl bg-cyan text-ink font-medium text-[13px] px-4 py-2.5 hover:bg-cyan-soft transition-all">
+            <Plus className="h-4 w-4" />
+            Create Project
+          </button>
         }
       />
 
-      {/* Filter bar */}
-      <div
-        className="mb-6 flex items-center gap-2 overflow-x-auto rounded-xl border p-1.5"
-        style={{
-          background: "var(--admin-surface)",
-          borderColor: "var(--admin-border)",
-        }}
-      >
-        <span
-          className="inline-flex items-center gap-1.5 pl-2 pr-1 text-[11.5px] font-medium"
-          style={{ color: "var(--admin-text-muted)" }}
-        >
-          <Filter className="h-3.5 w-3.5" />
-        </span>
-        {FILTERS.map((f) => {
-          const active = filter === f.value;
-          const count =
-            f.value === "all"
-              ? projects.length
-              : f.value === "active"
-              ? projects.filter((p) => ACTIVE_STAGES.includes(p.status)).length
-              : projects.filter(
-                  (p) => p.status === "Maintenance" || p.status === "On Hold"
-                ).length;
-          return (
+      {/* Search + filter */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-5">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/40" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search projects..."
+            className="w-full rounded-xl bg-white/[0.04] border border-white/10 pl-10 pr-4 py-2.5 text-[13px] text-white placeholder:text-white/30 focus:outline-none focus:border-cyan/40 focus:ring-2 focus:ring-cyan/15 transition-all"
+          />
+        </div>
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+          <Filter className="h-3.5 w-3.5 text-white/40 shrink-0" />
+          {FILTERS.map((f) => (
             <button
               key={f.value}
               onClick={() => setFilter(f.value)}
-              className="relative inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12.5px] font-medium transition-colors whitespace-nowrap"
-              style={{
-                background: active ? "var(--admin-accent)" : "transparent",
-                color: active ? "#0F172A" : "var(--admin-text-secondary)",
-              }}
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-[11.5px] font-medium transition-all ${
+                filter === f.value
+                  ? "bg-cyan/15 border-cyan/40 text-white"
+                  : "bg-white/[0.03] border-white/10 text-white/55 hover:border-white/20"
+              }`}
             >
               {f.label}
-              <span
-                className="inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold"
-                style={{
-                  background: active
-                    ? "rgba(15,23,42,0.18)"
-                    : "var(--admin-surface-2)",
-                  color: active ? "#0F172A" : "var(--admin-text-muted)",
-                }}
-              >
-                {count}
-              </span>
             </button>
-          );
-        })}
+          ))}
+        </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {/* Error */}
+      {error && (
+        <div className="mb-5 rounded-lg border border-rose-400/30 bg-rose-400/10 px-4 py-3 text-[13px] text-rose-200">
+          {error}
+        </div>
+      )}
+
+      {/* Loading */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <AdminCard key={i} className="p-5">
+              <Skeleton className="h-5 w-40 mb-3" />
+              <Skeleton className="h-3 w-28 mb-4" />
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-2/3" />
+              </div>
+            </AdminCard>
+          ))}
+        </div>
+      ) : projects.length === 0 ? (
         <AdminCard>
           <EmptyState
             icon={<FolderKanban className="h-6 w-6" />}
-            title="No projects found"
-            description="Projects appear here once a submission is approved and converted."
-            action={
-              <Link href="/admin/submissions">
-                <AdminButton variant="primary" size="sm">
-                  Browse submissions
-                </AdminButton>
-              </Link>
-            }
+            title="No Projects Available"
+            description="Projects are created when SRG submissions are approved. Approve a submission to create your first project."
           />
         </AdminCard>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map((p, i) => {
-            const teamIds = Object.values(p.assignedTeam).filter(
-              Boolean
-            ) as string[];
-            const members = teamIds
-              .map((tid) => teamMembers.find((m) => m.id === tid))
-              .filter(Boolean);
-            return (
-              <motion.div
-                key={p.id}
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: i * 0.04 }}
-              >
-                <Link href={`/admin/projects/${p.id}`}>
-                  <AdminCard
-                    strong
-                    className="p-5 h-full hover:translate-y-[-2px] transition-transform group cursor-pointer"
-                  >
-                    {/* Header */}
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                      <div className="min-w-0 flex-1">
-                        <h3
-                          className="font-semibold text-[15px] tracking-tight truncate"
-                          style={{ color: "var(--admin-text)" }}
-                        >
-                          {p.name}
-                        </h3>
-                        <p
-                          className="text-[11.5px] mt-0.5 truncate"
-                          style={{ color: "var(--admin-text-muted)" }}
-                        >
-                          {p.clientCompany}
-                        </p>
-                      </div>
-                      <DevStatusBadge status={p.status} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {projects.map((project, i) => (
+            <motion.div
+              key={project.id}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: i * 0.04 }}
+            >
+              <Link href={`/admin/projects/${project.id}`}>
+                <AdminCard className="p-5 h-full hover:border-cyan/25 transition-colors group cursor-pointer">
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div className="min-w-0">
+                      <h3 className="font-display text-[15px] font-semibold text-white truncate group-hover:text-cyan-soft transition-colors">
+                        {project.name}
+                      </h3>
+                      <p className="text-[11.5px] text-white/45 mt-0.5">
+                        {project.client?.companyName || "No client"} · {formatDate(project.createdAt)}
+                      </p>
                     </div>
+                    <DevStatusBadge status={project.status} />
+                  </div>
 
-                    {/* Description */}
-                    <p
-                      className="text-[12px] leading-relaxed line-clamp-2 mb-4"
-                      style={{ color: "var(--admin-text-secondary)" }}
-                    >
-                      {p.description || "No description provided."}
-                    </p>
-
-                    {/* Progress */}
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span
-                          className="text-[10.5px] uppercase tracking-wider font-medium"
-                          style={{ color: "var(--admin-text-muted)" }}
-                        >
-                          Progress
-                        </span>
-                        <span
-                          className="text-[12px] font-semibold tabular-nums"
-                          style={{ color: "var(--admin-text)" }}
-                        >
-                          {p.progress}%
-                        </span>
-                      </div>
-                      <ProgressBar value={p.progress} />
+                  {/* Progress bar */}
+                  <div className="mb-3">
+                    <div className="flex items-center justify-between text-[10.5px] text-white/45 mb-1">
+                      <span>Progress</span>
+                      <span>{project.progress}%</span>
                     </div>
-
-                    {/* Tech stack */}
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                      {p.techStack.slice(0, 4).map((t) => (
-                        <span
-                          key={t}
-                          className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium"
-                          style={{
-                            background: "var(--admin-surface-2)",
-                            borderColor: "var(--admin-border)",
-                            color: "var(--admin-text-secondary)",
-                          }}
-                        >
-                          <Code2 className="h-2.5 w-2.5" style={{ color: "var(--admin-accent)" }} />
-                          {t}
-                        </span>
-                      ))}
-                      {p.techStack.length > 4 && (
-                        <span
-                          className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium"
-                          style={{ color: "var(--admin-text-muted)" }}
-                        >
-                          +{p.techStack.length - 4}
-                        </span>
-                      )}
+                    <div className="h-1.5 rounded-full bg-white/8 overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-cyan/60 to-cyan rounded-full"
+                        style={{ width: `${project.progress}%` }}
+                      />
                     </div>
+                  </div>
 
-                    {/* Footer */}
-                    <div
-                      className="pt-3 border-t flex items-center justify-between"
-                      style={{ borderColor: "var(--admin-border)" }}
-                    >
-                      <div className="flex items-center gap-3">
-                        {/* Team avatars */}
-                        <div className="flex items-center -space-x-1.5">
-                          {members.slice(0, 3).map((m) => (
-                            <Avatar
-                              key={m!.id}
-                              initials={m!.initials}
-                              size="sm"
-                            />
-                          ))}
-                          {members.length > 3 && (
-                            <span
-                              className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-[10px] font-semibold border"
-                              style={{
-                                background: "var(--admin-surface-2)",
-                                borderColor: "var(--admin-border)",
-                                color: "var(--admin-text-secondary)",
-                              }}
-                            >
-                              +{members.length - 3}
-                            </span>
-                          )}
-                          {members.length === 0 && (
-                            <span
-                              className="inline-flex h-7 w-7 items-center justify-center rounded-lg border text-[10px]"
-                              style={{
-                                background: "var(--admin-surface-2)",
-                                borderColor: "var(--admin-border)",
-                                color: "var(--admin-text-muted)",
-                              }}
-                            >
-                              <Users className="h-3 w-3" />
-                            </span>
-                          )}
-                        </div>
-                        <PriorityBadge priority={p.priority} />
-                      </div>
-                      <span
-                        className="inline-flex items-center gap-1 text-[11.5px] font-medium group-hover:gap-1.5 transition-all"
-                        style={{ color: "var(--admin-accent)" }}
-                      >
-                        Open
-                        <ArrowRight className="h-3 w-3" />
-                      </span>
-                    </div>
-
-                    {/* Timeline */}
-                    <div
-                      className="mt-3 flex items-center gap-1.5 text-[10.5px]"
-                      style={{ color: "var(--admin-text-muted)" }}
-                    >
-                      <Calendar className="h-3 w-3" />
-                      {formatDate(p.startDate)} → {formatDate(p.estimatedEndDate)}
-                    </div>
-                  </AdminCard>
-                </Link>
-              </motion.div>
-            );
-          })}
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-white/45">{project.currentStage}</span>
+                    <span className="inline-flex items-center gap-1 text-[12px] text-cyan-soft group-hover:text-cyan transition-colors">
+                      Open
+                      <ArrowRight className="h-3 w-3" />
+                    </span>
+                  </div>
+                </AdminCard>
+              </Link>
+            </motion.div>
+          ))}
         </div>
       )}
     </PageTransition>

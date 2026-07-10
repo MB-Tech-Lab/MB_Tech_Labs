@@ -1,358 +1,173 @@
 "use client";
 
-import { useMemo } from "react";
-import { motion } from "framer-motion";
-import {
-  TrendingUp,
-  DollarSign,
-  FolderKanban,
-  Target,
-  Activity,
-} from "lucide-react";
-import { useAdmin } from "@/modules/admin/context/AdminContext";
+import { useState, useEffect } from "react";
+import { BarChart3, TrendingUp, DollarSign, Target, PieChart } from "lucide-react";
 import {
   AdminCard,
   PageTransition,
+  EmptyState,
+  Skeleton,
   PageHeader,
-  SectionTitle,
   AnimatedCounter,
 } from "@/modules/admin/components/ui";
-import {
-  AdminAreaChart,
-  AdminBarChart,
-  AdminDonutChart,
-} from "@/modules/admin/components/charts";
-
-const LEADS_DATA = [
-  { name: "Jan", value: 12 },
-  { name: "Feb", value: 19 },
-  { name: "Mar", value: 15 },
-  { name: "Apr", value: 22 },
-  { name: "May", value: 28 },
-  { name: "Jun", value: 24 },
-  { name: "Jul", value: 31 },
-  { name: "Aug", value: 27 },
-  { name: "Sep", value: 35 },
-  { name: "Oct", value: 30 },
-  { name: "Nov", value: 38 },
-  { name: "Dec", value: 42 },
-];
-
-const REVENUE_DATA = [
-  { name: "Jan", value: 18000 },
-  { name: "Feb", value: 22000 },
-  { name: "Mar", value: 15000 },
-  { name: "Apr", value: 35000 },
-  { name: "May", value: 42000 },
-  { name: "Jun", value: 38000 },
-  { name: "Jul", value: 51000 },
-  { name: "Aug", value: 47000 },
-  { name: "Sep", value: 58000 },
-  { name: "Oct", value: 63000 },
-  { name: "Nov", value: 59000 },
-  { name: "Dec", value: 72000 },
-];
-
-const TOP_INDUSTRIES = [
-  { name: "Logistics", value: 8 },
-  { name: "Healthcare", value: 6 },
-  { name: "FinTech", value: 5 },
-  { name: "Retail", value: 4 },
-  { name: "Real Estate", value: 3 },
-  { name: "Education", value: 2 },
-];
-
-const TOP_SERVICES = [
-  { name: "ERP System", value: 9 },
-  { name: "Web App", value: 7 },
-  { name: "Mobile App", value: 6 },
-  { name: "E-commerce", value: 4 },
-  { name: "AI/ML Solution", value: 3 },
-  { name: "SaaS Platform", value: 3 },
-];
-
-function formatMoney(amount: number): string {
-  return amount.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
-}
+import { analyticsApi, type AnalyticsData } from "@/lib/api/analytics";
 
 export default function AnalyticsPage() {
-  const { submissions, projects, invoices, stats } = useAdmin();
+  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Project status distribution
-  const projectStatusData = useMemo(() => {
-    const counts = new Map<string, number>();
-    projects.forEach((p) => {
-      counts.set(p.status, (counts.get(p.status) ?? 0) + 1);
-    });
-    if (counts.size === 0) {
-      return [
-        { name: "Discovery", value: 1 },
-        { name: "Development", value: 1 },
-        { name: "Testing", value: 1 },
-        { name: "Maintenance", value: 1 },
-      ];
-    }
-    return Array.from(counts.entries()).map(([name, value]) => ({
-      name,
-      value,
-    }));
-  }, [projects]);
+  useEffect(() => {
+    analyticsApi.get()
+      .then(setData)
+      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load"))
+      .finally(() => setLoading(false));
+  }, []);
 
-  // KPIs
-  const totalRevenue = invoices
-    .filter((i) => i.status === "Paid")
-    .reduce((sum, i) => sum + i.amount, 0);
-  const approvedCount = submissions.filter(
-    (s) => s.status === "Approved"
-  ).length;
-  const conversionRate =
-    submissions.length > 0
-      ? Math.round((approvedCount / submissions.length) * 100)
-      : 0;
-  const avgProjectValue =
-    projects.length > 0
-      ? Math.round(
-          projects.reduce((sum, p) => sum + p.budget, 0) / projects.length
-        )
-      : 0;
-
-  const KPIS = [
-    {
-      label: "Conversion Rate",
-      value: conversionRate,
-      suffix: "%",
-      icon: Target,
-      color: "#8B5CF6",
-      hint: `${approvedCount} of ${submissions.length} approved`,
-    },
-    {
-      label: "Avg Project Cost",
-      value: avgProjectValue,
-      suffix: "",
-      icon: DollarSign,
-      color: "#10B981",
-      isMoney: true,
-      hint: `Across ${projects.length} project${projects.length === 1 ? "" : "s"}`,
-    },
-    {
-      label: "Total Revenue",
-      value: totalRevenue,
-      suffix: "",
-      icon: TrendingUp,
-      color: "#25D6FF",
-      isMoney: true,
-      hint: "From paid invoices",
-    },
-    {
-      label: "Active Projects",
-      value: stats.activeProjects,
-      suffix: "",
-      icon: FolderKanban,
-      color: "#F59E0B",
-      hint: "In delivery",
-    },
-  ];
+  const maxRevenue = data ? Math.max(...data.monthlyRevenue.map((m) => m.revenue), 1) : 1;
+  const maxProjectTypes = data ? Math.max(...data.projectTypes.map((p) => p.count), 1) : 1;
+  const maxIndustries = data ? Math.max(...data.industryDistribution.map((i) => i.count), 1) : 1;
 
   return (
     <PageTransition>
-      <PageHeader
-        title="Analytics"
-        description="Business intelligence across the entire pipeline"
-      />
+      <PageHeader title="Analytics" description="Real business insights from your database" />
 
-      {/* KPI cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        {KPIS.map((kpi, i) => (
-          <motion.div
-            key={kpi.label}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: i * 0.05 }}
-          >
-            <AdminCard strong className="p-5 h-full">
-              <div className="flex items-start justify-between mb-3">
-                <span
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg"
-                  style={{ background: `${kpi.color}1A`, color: kpi.color }}
-                >
-                  <kpi.icon className="h-4 w-4" />
-                </span>
-              </div>
-              <p
-                className="text-[10.5px] uppercase tracking-[0.18em] font-semibold mb-1"
-                style={{ color: "var(--admin-text-muted)" }}
-              >
-                {kpi.label}
-              </p>
-              <p
-                className="font-bold text-[24px] tabular-nums"
-                style={{ color: "var(--admin-text)" }}
-              >
-                {kpi.isMoney ? (
-                  <>
-                    <AnimatedCounter value={kpi.value} duration={1200} />
-                  </>
-                ) : (
-                  <>
-                    <AnimatedCounter value={kpi.value} duration={1200} />
-                    {kpi.suffix}
-                  </>
-                )}
-              </p>
-              <p
-                className="text-[10.5px] mt-1"
-                style={{ color: "var(--admin-text-muted)" }}
-              >
-                {kpi.hint}
-              </p>
-            </AdminCard>
-          </motion.div>
-        ))}
-      </div>
+      {error && <div className="mb-5 rounded-lg border border-rose-400/30 bg-rose-400/10 px-4 py-3 text-[13px] text-rose-200">{error}</div>}
 
-      {/* Charts row 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-        <AdminCard className="p-5">
-          <SectionTitle
-            eyebrow="Acquisition"
-            title="Monthly Leads"
-            description="New submission volume over the past 12 months"
-            icon={<TrendingUp className="h-4 w-4" />}
-          />
-          <AdminAreaChart data={LEADS_DATA} dataKey="value" xKey="name" color="#25D6FF" height={240} />
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <AdminCard className="p-4">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-cyan/10 border border-white/10 text-cyan">
+            <Target className="h-4 w-4" />
+          </span>
+          <p className="mt-3 font-display text-[24px] font-semibold text-white tabular-nums">
+            {loading ? <Skeleton className="h-6 w-12" /> : <AnimatedCounter value={data?.leadConversion.total || 0} />}
+          </p>
+          <p className="text-[11px] text-white/50">Total Leads</p>
         </AdminCard>
-
-        <AdminCard className="p-5">
-          <SectionTitle
-            eyebrow="Financials"
-            title="Revenue Growth"
-            description="Recognized revenue trend (USD)"
-            icon={<DollarSign className="h-4 w-4" />}
-          />
-          <AdminBarChart data={REVENUE_DATA} dataKey="value" xKey="name" color="#10B981" height={240} />
+        <AdminCard className="p-4">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-400/10 border border-white/10 text-emerald-200">
+            <TrendingUp className="h-4 w-4" />
+          </span>
+          <p className="mt-3 font-display text-[24px] font-semibold text-white tabular-nums">
+            {loading ? <Skeleton className="h-6 w-12" /> : `${data?.leadConversion.rate || 0}%`}
+          </p>
+          <p className="text-[11px] text-white/50">Conversion Rate</p>
+        </AdminCard>
+        <AdminCard className="p-4">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-amber-400/10 border border-white/10 text-amber-200">
+            <DollarSign className="h-4 w-4" />
+          </span>
+          <p className="mt-3 font-display text-[24px] font-semibold text-white tabular-nums">
+            {loading ? <Skeleton className="h-6 w-16" /> : `$${(data?.monthlyRevenue.reduce((s, m) => s + m.revenue, 0) || 0).toLocaleString()}`}
+          </p>
+          <p className="text-[11px] text-white/50">Revenue (12mo)</p>
+        </AdminCard>
+        <AdminCard className="p-4">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-violet-400/10 border border-white/10 text-violet-200">
+            <BarChart3 className="h-4 w-4" />
+          </span>
+          <p className="mt-3 font-display text-[24px] font-semibold text-white tabular-nums">
+            {loading ? <Skeleton className="h-6 w-12" /> : <AnimatedCounter value={data?.leadConversion.approved || 0} />}
+          </p>
+          <p className="text-[11px] text-white/50">Approved Leads</p>
         </AdminCard>
       </div>
 
-      {/* Charts row 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <AdminCard className="p-5">
-          <SectionTitle
-            eyebrow="Distribution"
-            title="Project Status"
-            description="Active projects by stage"
-            icon={<Activity className="h-4 w-4" />}
+      {loading ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <AdminCard className="p-5"><Skeleton className="h-64 w-full" /></AdminCard>
+          <AdminCard className="p-5"><Skeleton className="h-64 w-full" /></AdminCard>
+        </div>
+      ) : !data || (data.leadConversion.total === 0 && data.monthlyRevenue.every((m) => m.revenue === 0)) ? (
+        <AdminCard>
+          <EmptyState
+            icon={<PieChart className="h-6 w-6" />}
+            title="No Analytics Available"
+            description="Analytics will appear here once you have SRG submissions, projects, and payments in the database."
           />
-          <AdminDonutChart data={projectStatusData} height={240} />
-          <div className="mt-3 grid grid-cols-2 gap-1.5">
-            {projectStatusData.map((s, i) => {
-              const colors = ["#25D6FF", "#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444", "#EC4899", "#64748B"];
-              const color = colors[i % colors.length];
-              return (
-                <div
-                  key={s.name}
-                  className="flex items-center gap-1.5 text-[10.5px]"
-                  style={{ color: "var(--admin-text-secondary)" }}
-                >
-                  <span
-                    className="h-2 w-2 rounded-full"
-                    style={{ background: color }}
-                  />
-                  {s.name}
-                  <span style={{ color: "var(--admin-text-muted)" }}>
-                    ({s.value})
-                  </span>
+        </AdminCard>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Monthly Revenue */}
+          <AdminCard className="p-5">
+            <h3 className="font-display text-[14px] font-semibold text-white mb-4">Monthly Revenue</h3>
+            <div className="flex items-end gap-1.5 h-40">
+              {data.monthlyRevenue.map((m, i) => (
+                <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                  <div className="w-full bg-white/[0.03] rounded-t-md overflow-hidden flex-1 flex items-end">
+                    <div
+                      className="w-full bg-gradient-to-t from-cyan/40 to-cyan rounded-t-md transition-all"
+                      style={{ height: `${(m.revenue / maxRevenue) * 100}%`, minHeight: m.revenue > 0 ? "4px" : "0" }}
+                    />
+                  </div>
+                  <span className="text-[9px] text-white/40">{m.month}</span>
                 </div>
-              );
-            })}
-          </div>
-        </AdminCard>
+              ))}
+            </div>
+          </AdminCard>
 
-        <AdminCard className="p-5">
-          <SectionTitle
-            eyebrow="Verticals"
-            title="Top Industries"
-            description="By submission volume"
-            icon={<TrendingUp className="h-4 w-4" />}
-          />
-          <AdminBarChart
-            data={TOP_INDUSTRIES}
-            dataKey="value"
-            xKey="name"
-            color="#8B5CF6"
-            horizontal
-            height={240}
-          />
-        </AdminCard>
+          {/* Projects by Status */}
+          <AdminCard className="p-5">
+            <h3 className="font-display text-[14px] font-semibold text-white mb-4">Projects by Status</h3>
+            <div className="space-y-2">
+              {data.projectsByStatus.length === 0 ? (
+                <p className="text-[12px] text-white/40 py-4 text-center">No projects yet</p>
+              ) : (
+                data.projectsByStatus.map((p) => (
+                  <div key={p.status} className="flex items-center gap-3">
+                    <span className="text-[11px] text-white/65 w-28 shrink-0">{p.status}</span>
+                    <div className="flex-1 h-5 rounded-md bg-white/[0.03] overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-cyan/40 to-cyan rounded-md" style={{ width: `${(p.count / Math.max(...data.projectsByStatus.map((s) => s.count), 1)) * 100}%` }} />
+                    </div>
+                    <span className="font-mono text-[11px] text-white w-6 text-right">{p.count}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </AdminCard>
 
-        <AdminCard className="p-5">
-          <SectionTitle
-            eyebrow="Offerings"
-            title="Top Services"
-            description="By project type"
-            icon={<Activity className="h-4 w-4" />}
-          />
-          <AdminBarChart
-            data={TOP_SERVICES}
-            dataKey="value"
-            xKey="name"
-            color="#F59E0B"
-            horizontal
-            height={240}
-          />
-        </AdminCard>
-      </div>
+          {/* Project Types */}
+          <AdminCard className="p-5">
+            <h3 className="font-display text-[14px] font-semibold text-white mb-4">Project Types</h3>
+            <div className="space-y-2">
+              {data.projectTypes.length === 0 ? (
+                <p className="text-[12px] text-white/40 py-4 text-center">No SRG submissions yet</p>
+              ) : (
+                data.projectTypes.map((p) => (
+                  <div key={p.type} className="flex items-center gap-3">
+                    <span className="text-[11px] text-white/65 w-40 shrink-0 truncate">{p.type}</span>
+                    <div className="flex-1 h-5 rounded-md bg-white/[0.03] overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-violet-400/40 to-cyan rounded-md" style={{ width: `${(p.count / maxProjectTypes) * 100}%` }} />
+                    </div>
+                    <span className="font-mono text-[11px] text-white w-6 text-right">{p.count}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </AdminCard>
 
-      {/* Funnel summary */}
-      <div className="mt-4">
-        <AdminCard className="p-5">
-          <SectionTitle
-            eyebrow="Pipeline"
-            title="Conversion Funnel"
-            description="From lead to approved"
-            icon={<Target className="h-4 w-4" />}
-          />
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-            {[
-              { label: "Total Leads", value: submissions.length, color: "#25D6FF" },
-              { label: "New", value: stats.newSubmissions, color: "#3B82F6" },
-              { label: "In Review", value: stats.inReview, color: "#8B5CF6" },
-              { label: "Proposal", value: stats.proposalPending, color: "#F59E0B" },
-              { label: "Approved", value: stats.approved, color: "#10B981" },
-              { label: "In Dev", value: stats.activeProjects, color: "#EC4899" },
-              { label: "Completed", value: stats.completed, color: "#64748B" },
-            ].map((stage, i) => (
-              <motion.div
-                key={stage.label}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: i * 0.05 }}
-                className="rounded-lg border p-3 text-center"
-                style={{
-                  background: `${stage.color}0D`,
-                  borderColor: `${stage.color}33`,
-                }}
-              >
-                <p
-                  className="text-[10px] uppercase tracking-wider font-semibold mb-1"
-                  style={{ color: stage.color }}
-                >
-                  {stage.label}
-                </p>
-                <p
-                  className="font-bold text-[20px] tabular-nums"
-                  style={{ color: "var(--admin-text)" }}
-                >
-                  {stage.value}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-        </AdminCard>
-      </div>
+          {/* Industry Distribution */}
+          <AdminCard className="p-5">
+            <h3 className="font-display text-[14px] font-semibold text-white mb-4">Industry Distribution</h3>
+            <div className="space-y-2">
+              {data.industryDistribution.length === 0 ? (
+                <p className="text-[12px] text-white/40 py-4 text-center">No clients yet</p>
+              ) : (
+                data.industryDistribution.map((i) => (
+                  <div key={i.industry} className="flex items-center gap-3">
+                    <span className="text-[11px] text-white/65 w-40 shrink-0 truncate">{i.industry}</span>
+                    <div className="flex-1 h-5 rounded-md bg-white/[0.03] overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-amber-400/40 to-cyan rounded-md" style={{ width: `${(i.count / maxIndustries) * 100}%` }} />
+                    </div>
+                    <span className="font-mono text-[11px] text-white w-6 text-right">{i.count}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </AdminCard>
+        </div>
+      )}
     </PageTransition>
   );
 }
