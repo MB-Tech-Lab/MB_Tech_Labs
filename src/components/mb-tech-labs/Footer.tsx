@@ -35,7 +35,7 @@ const RESOURCE_LINKS = [
   { label: "Technology Stack", href: "/technologies" },
   { label: "Case Studies", href: "/projects" },
   { label: "Development Process", href: "/services" },
-  { label: "FAQ", href: "/#faq" },
+  { label: "FAQ", href: "/contact" },
   { label: "Blog", href: "#", comingSoon: true },
 ];
 

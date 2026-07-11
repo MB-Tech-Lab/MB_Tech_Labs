@@ -6,7 +6,7 @@ import { Menu, X, ArrowUpRight, Clock } from "lucide-react";
 import Image from "next/image";
 
 const NAV_ITEMS = [
-  { label: "Home", href: "#home" },
+  { label: "Home", href: "/" },
   { label: "Services", href: "/services" },
   { label: "Projects", href: "/projects" },
   { label: "About", href: "/about" },
@@ -63,7 +63,7 @@ export function FloatingNav() {
           }`}
         >
           {/* Logo */}
-          <a href="#home" className="flex items-center gap-2.5 shrink-0 group">
+          <a href="/" className="flex items-center gap-2.5 shrink-0 group">
             <div className="relative h-9 w-9 rounded-xl overflow-hidden ring-1 ring-white/10 bg-white/5">
               <Image
                 src="/MBTechLabsLogo.png"
