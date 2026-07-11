@@ -59,7 +59,7 @@ export default function AnalyticsPage() {
             <DollarSign className="h-4 w-4" />
           </span>
           <p className="mt-3 font-display text-[24px] font-semibold text-white tabular-nums">
-            {loading ? <Skeleton className="h-6 w-16" /> : `$${(data?.monthlyRevenue.reduce((s, m) => s + m.revenue, 0) || 0).toLocaleString()}`}
+            {loading ? <Skeleton className="h-6 w-16" /> : new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(data?.monthlyRevenue.reduce((s, m) => s + m.revenue, 0) || 0)}
           </p>
           <p className="text-[11px] text-white/50">Revenue (12mo)</p>
         </AdminCard>

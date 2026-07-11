@@ -76,7 +76,7 @@ export class InvoiceService {
       data: {
         number: data.number,
         amount: data.amount,
-        currency: data.currency || "USD",
+        currency: data.currency || "INR",
         taxAmount: data.taxAmount || 0,
         totalAmount,
         issueDate: data.issueDate ? new Date(data.issueDate) : new Date(),

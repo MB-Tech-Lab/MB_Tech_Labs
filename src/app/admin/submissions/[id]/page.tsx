@@ -481,7 +481,7 @@ export default function SrgDetailPage({
                   <div className="flex items-center justify-between">
                     <span className="text-[13px]" style={{ color: "var(--admin-text-secondary)" }}>Total</span>
                     <span className="font-display text-[20px] font-bold" style={{ color: "var(--admin-accent)" }}>
-                      {computeQuotationTotal(submission.quotation).toLocaleString("en-US", { style: "currency", currency: submission.quotation.currency })}
+                      {new Intl.NumberFormat("en-IN", { style: "currency", currency: submission.quotation.currency === "USD" ? "INR" : submission.quotation.currency, maximumFractionDigits: 0 }).format(computeQuotationTotal(submission.quotation))}
                     </span>
                   </div>
                 </div>

@@ -198,7 +198,7 @@ export default function PricingPolicyPage() {
           },
           {
             question: "How much does a typical project cost?",
-            answer: "MVPs typically range from $5K–$25K. Growth products (multi-module platforms) range from $25K–$100K. Enterprise systems (custom ERP, CRM, SaaS) start at $100K+. Your exact quote depends on the SRG submission.",
+            answer: "MVPs typically range from ₹40,000–₹2,00,000. Growth products (multi-module platforms) range from ₹2,00,000–₹8,00,000. Enterprise systems (custom ERP, CRM, SaaS) start from ₹8,00,000. Your exact quote depends on the SRG submission.",
           },
           {
             question: "Is the SRG form free?",

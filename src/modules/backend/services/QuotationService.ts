@@ -80,7 +80,7 @@ export class QuotationService {
       data: {
         title: data.title,
         items: JSON.stringify(items),
-        currency: data.currency || "USD",
+        currency: data.currency || "INR",
         taxRate: data.taxRate || 0,
         discount: data.discount || 0,
         paymentTerms: data.paymentTerms,

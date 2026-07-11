@@ -12,7 +12,7 @@ import {
 import { invoicesApi, type Invoice } from "@/lib/api/invoices";
 
 function formatMoney(amount: number, currency: string): string {
-  return amount.toLocaleString("en-US", { style: "currency", currency, minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency: currency === "USD" ? "INR" : currency, maximumFractionDigits: 0 }).format(amount);
 }
 
 function formatDate(ts: string): string {

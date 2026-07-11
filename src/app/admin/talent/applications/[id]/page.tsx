@@ -108,11 +108,10 @@ export default function CandidateProfilePage({ params }: { params: Promise<{ id:
     if (!confirm("Convert this candidate to a team member? This will create a User account with DEVELOPER role.")) return;
     try {
       await careersApi.updateApplication(app.id, { convertToEmployee: true });
-      alert("Candidate converted to team member! A User account has been created.");
       const updated = await careersApi.getApplication(app.id);
       setApp(updated);
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Conversion failed");
+      console.error("Conversion failed:", e);
     }
   }
 

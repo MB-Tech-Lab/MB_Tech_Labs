@@ -43,11 +43,11 @@ const STAGES = [
 ];
 
 const BUDGETS = [
-  { label: "Under $5K / ₹40K", value: "under_5k" },
-  { label: "$5K – $15K / ₹40K–₹1.2L", value: "5k_15k" },
-  { label: "$15K – $50K / ₹1.2L–₹4L", value: "15k_50k" },
-  { label: "$50K – $150K / ₹4L–₹12L", value: "50k_150k" },
-  { label: "$150K+ / ₹12L+", value: "above_150k" },
+  { label: "Under ₹40,000", value: "under_5k" },
+  { label: "₹40,000 – ₹1,20,000", value: "5k_15k" },
+  { label: "₹1,20,000 – ₹4,00,000", value: "15k_50k" },
+  { label: "₹4,00,000 – ₹12,00,000", value: "50k_150k" },
+  { label: "₹12,00,000+", value: "above_150k" },
   { label: "Not sure yet", value: "unsure" },
 ];
 

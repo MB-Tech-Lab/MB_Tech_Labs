@@ -48,7 +48,7 @@ const QUICK_ACTIONS = [
 ];
 
 function formatMoney(value: number): string {
-  return value.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value);
 }
 
 function timeAgo(ts: string): string {

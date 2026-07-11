@@ -80,7 +80,7 @@ export const crmTemplate: SrgTemplate = {
           id: "avg_deal_size",
           type: "text",
           label: "Average deal size (with currency)",
-          placeholder: "e.g. ₹2,00,000 / $2,500",
+          placeholder: "e.g. ₹2,00,000",
         },
       ],
     },

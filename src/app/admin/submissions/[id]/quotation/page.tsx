@@ -51,7 +51,7 @@ const CATEGORIES = [
   "Other",
 ];
 
-const CURRENCIES = ["USD", "INR", "EUR", "GBP", "AED"];
+const CURRENCIES = ["INR", "USD", "EUR", "GBP", "AED"];
 
 const STATUS_COLORS: Record<
   string,
@@ -64,12 +64,11 @@ const STATUS_COLORS: Record<
 };
 
 function formatMoney(amount: number, currency: string): string {
-  return amount.toLocaleString("en-US", {
+  return new Intl.NumberFormat("en-IN", {
     style: "currency",
-    currency,
-    minimumFractionDigits: 0,
+    currency: currency === "USD" ? "INR" : currency,
     maximumFractionDigits: 0,
-  });
+  }).format(amount);
 }
 
 export default function QuotationBuilderPage({
@@ -101,7 +100,7 @@ export default function QuotationBuilderPage({
   const [taxRate, setTaxRate] = useState(submission?.quotation?.taxRate ?? 0);
   const [discount, setDiscount] = useState(submission?.quotation?.discount ?? 0);
   const [currency, setCurrency] = useState(
-    submission?.quotation?.currency ?? "USD"
+    submission?.quotation?.currency ?? "INR"
   );
   const [validUntil, setValidUntil] = useState(
     submission?.quotation?.validUntil ??

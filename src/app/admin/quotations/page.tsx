@@ -33,7 +33,7 @@ export default function QuotationsPage() {
     <PageTransition>
       <PageHeader
         title="Quotations"
-        description={quotations.length > 0 ? `${quotations.length} quotations · ${formatMoney(total, "USD")} total` : "Manage client quotations"}
+        description={quotations.length > 0 ? `${quotations.length} quotations · ${new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(total)} total` : "Manage client quotations"}
         action={
           <button className="inline-flex items-center gap-1.5 rounded-xl bg-cyan text-ink font-medium text-[13px] px-4 py-2.5 hover:bg-cyan-soft transition-all">
             <Plus className="h-4 w-4" />
